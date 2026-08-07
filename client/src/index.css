@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg-navy: #050505;          /* Deep space black */
+  --color-bg-navy-light: #0D0D0D;    /* SaaS Surface */
+  --color-bg-navy-dark: #020202;     /* Extreme dark inputs */
+  --color-bg-navy-border: rgba(255, 255, 255, 0.05);
+  
+  --color-brand-emerald: #10B981;    /* Algorand Emerald */
+  --color-brand-violet: #8B5CF6;     /* Purple / Vercel-like */
+  --color-brand-blue: #3B82F6;       /* Stripe Blue */
+  --color-brand-amber: #F59E0B;      /* Policy Warning */
+  --color-brand-rose: #EF4444;       /* High Risk Red */
+  --color-brand-magenta: #EC4899;    /* Pink highlight */
+  --color-brand-cyan: #22D3EE;       /* Cyan details */
+  
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  background-color: #050505;
+  color: #F3F4F6;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+/* Awwwards-grade mesh background */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-color: #050505;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.07) 0%, transparent 35%),
+    radial-gradient(circle at 50% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 10% 80%, rgba(34, 211, 238, 0.05) 0%, transparent 40%);
+  filter: blur(10px);
+}
+
+/* Linear-style Grid pattern overlay */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+  mask-image: radial-gradient(circle at 50% 50%, black 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 60%, transparent 100%);
+  opacity: 0.85;
+}
+
+/* Moving Aurora Blobs */
+@keyframes drift-blob-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(40px, -50px) scale(1.15); }
+  66% { transform: translate(-30px, 20px) scale(0.9); }
+}
+
+@keyframes drift-blob-2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-40px, 40px) scale(1.2); }
+}
+
+.aurora-blob-1 {
+  animation: drift-blob-1 25s ease-in-out infinite;
+}
+
+.aurora-blob-2 {
+  animation: drift-blob-2 30s ease-in-out infinite;
+}
+
+/* Premium Card Glassmorphism */
+.premium-card {
+  background: rgba(13, 13, 13, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 
+    0 15px 40px -15px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 40px -10px rgba(139, 92, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Mouse-spotlight border hover effect using custom CSS properties */
+.spotlight-card {
+  position: relative;
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    400px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Premium Glowing Buttons */
+.btn-premium-violet {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+    0 8px 30px -6px rgba(139, 92, 246, 0.5);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium-violet:hover {
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+    0 12px 35px -6px rgba(139, 92, 246, 0.7);
+  transform: translateY(-1px);
+}
+
+.btn-premium-border {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium-border:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+/* Animations for Visual Elements */
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rotate-slow {
+  animation: spin-slow 40s linear infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.pulse-glow-slow {
+  animation: pulse-slow 6s ease-in-out infinite;
+}
+
+/* SVG graph animation */
+@keyframes draw-path {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-chart-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-path 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Custom horizontal flow dots animation */
+@keyframes flow-dots {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 0;
+  }
+}
+
+.flow-connector-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.5px, transparent 1.5px);
+  background-size: 12px 100%;
+  animation: flow-dots 2s linear infinite;
+}
+
+/* Shimmer load skeleton */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: shimmer 1.8s infinite;
+}
+
+/* Custom cursor styling (if active) */
+.custom-cursor {
+  width: 24px;
+  height: 24px;
+  background: rgba(139, 92, 246, 0.3);
+  filter: blur(4px);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s;
+}
+
+.custom-cursor-glow {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+}
+
+/* Scroll Reveal Animation Styles (Awwwards reveal effect) */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  filter: blur(5px);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-section.revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+/* Live Terminal Log Line entrance */
+@keyframes lineFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: lineFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 3D Orb Animations */
+.orb-container {
+  perspective: 1000px;
+}
+
+@keyframes rotate-3d-slow {
+  0% {
+    transform: rotateX(60deg) rotateY(0deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(60deg) rotateY(0deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rotate-3d-fast {
+  0% {
+    transform: rotateX(60deg) rotateY(0deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(60deg) rotateY(0deg) rotateZ(360deg);
+  }
+}
+
+.orb-ring-slow {
+  animation: rotate-3d-slow 15s linear infinite;
+}
+
+.orb-ring-fast {
+  animation: rotate-3d-fast 3s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+    filter: drop-shadow(0 0 35px rgba(139, 92, 246, 0.8));
+  }
+}
+
+.orb-core-pulse {
+  animation: pulse-glow 3s ease-in-out infinite;
+}

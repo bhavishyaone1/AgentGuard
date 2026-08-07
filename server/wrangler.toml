@@ -1,0 +1,13 @@
+name = "agentguard-server"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = [ "nodejs_compat" ]
+
+[vars]
+ALGORAND_NODE = "https://testnet-api.algonode.cloud"
+USDC_ASA_ID = "10458941"
+# Default merchant wallet (payTo address) that will receive the $0.01 USDC check fee
+# Users can override this by setting the MERCHANT_ADDRESS environment variable
+MERCHANT_ADDRESS = "3CHNPL6J6FPKP75C2CQVH3ZQWOE6YCULJZVNGQNRBPKT2UXNHJX4E4ZFTE"
+# Facilitator URL
+FACILITATOR_URL = "https://facilitator.goplausible.xyz"
