@@ -188,14 +188,18 @@ export default function App() {
     if (!address) return;
     try {
       const accountInfo = await algodClient.accountInformation(address).do();
-      const algo = accountInfo.amount / 1_000_000;
+      const rawAlgo = accountInfo.amount !== undefined ? accountInfo.amount : 0;
+      const algo = Number(BigInt(rawAlgo)) / 1_000_000;
       setAlgoBalance(algo);
       
       let usdc = 0;
       let opted = false;
-      for (const asset of accountInfo["assets"] || []) {
-        if (asset["asset-id"] === USDC_ASA_ID) {
-          usdc = asset["amount"] / 1_000_000;
+      const assets = (accountInfo as any).assets || [];
+      for (const asset of assets) {
+        const assetId = asset["asset-id"] !== undefined ? asset["asset-id"] : asset["assetId"];
+        if (Number(assetId) === USDC_ASA_ID) {
+          const amt = asset["amount"] !== undefined ? asset["amount"] : 0;
+          usdc = Number(BigInt(amt)) / 1_000_000;
           opted = true;
           break;
         }
@@ -203,9 +207,7 @@ export default function App() {
       setUsdcBalance(usdc);
       setIsOptedIn(opted);
     } catch (err: any) {
-      setAlgoBalance(0);
-      setUsdcBalance(0);
-      setIsOptedIn(false);
+      console.warn("fetchBalances warning:", err.message || err);
     }
   };
 
