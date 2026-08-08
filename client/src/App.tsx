@@ -712,7 +712,7 @@ export default function App() {
                   <Wallet className="w-3 h-3" /> Step 1: Fund & Opt-In
                 </span>
                 <span className="text-text-secondary leading-relaxed">
-                  Get testnet <b>ALGO</b> from Dispenser, then click <b>Opt-In to USDC</b> (or click <b className="text-brand-emerald">(Demo)</b> next to Secret Mnemonic for instant keys).
+                  Get testnet <b>ALGO</b> from the Dispenser, then click <b>Opt-In to USDC</b> to activate your wallet.
                 </span>
               </div>
 
