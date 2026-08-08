@@ -26,14 +26,9 @@ app.use(
   cors({
     origin: "*",
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "payment-signature", "x-payment"],
-    exposeHeaders: [
-      "payment-required",
-      "x-payment-required",
-      "payment-verified",
-      "x-payment-verified",
-      "x-payment-error"
-    ]
+    allowHeaders: ["*"],
+    exposeHeaders: ["*"],
+    maxAge: 86400
   })
 );
 
