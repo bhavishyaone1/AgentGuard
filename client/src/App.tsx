@@ -406,9 +406,8 @@ export default function App() {
         <div className="flex items-center gap-3">
           <a 
             href="#sandbox"
-            className="text-[10px] font-extrabold bg-gradient-to-r from-brand-violet to-brand-blue hover:from-brand-violet/90 hover:to-brand-blue/90 text-white px-4.5 py-2 rounded-full transition-all uppercase tracking-wider shadow-lg shadow-brand-violet/20 font-display flex items-center gap-1.5 cursor-pointer"
+            className="text-[10px] font-extrabold bg-gradient-to-r from-brand-violet to-brand-blue hover:from-brand-violet/90 hover:to-brand-blue/90 text-white px-5 py-2 rounded-full transition-all uppercase tracking-wider shadow-lg shadow-brand-violet/20 font-display cursor-pointer"
           >
-            <Sparkles className="w-3 h-3" />
             Launch Console
           </a>
         </div>
