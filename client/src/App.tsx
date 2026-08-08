@@ -145,6 +145,12 @@ export default function App() {
     }
   };
 
+  const loadDemoWallet = () => {
+    const DEMO_MNEMONIC = "sun sign term dash tube control method lumber elephant cause illegal arch pioneer soccer juice search isolate chimney thunder course liquid alarm element able catalog";
+    recoverWallet(DEMO_MNEMONIC);
+    addLog("Loaded funded testnet demo wallet (19.90 USDC, Opt-In Active).", "success");
+  };
+
   const recoverWallet = async (mnemonic: string) => {
     setWalletLoading(true);
     try {
@@ -232,6 +238,15 @@ export default function App() {
 
   const handlePrePaymentCheck = async () => {
     if (checking) return;
+
+    if (!isOptedIn || usdcBalance < 0.01) {
+      setLogs([]);
+      addLog("⚠️ Insufficient Testnet Balance or Missing USDC Opt-In.", "warn");
+      addLog(`Current balance: ${usdcBalance.toFixed(2)} USDC (Requires $0.01 USDC check fee).`, "error");
+      addLog("💡 Tip: Click 'Load Funded Demo Wallet' on the left to test instantly with 19.90 USDC!", "info");
+      return;
+    }
+
     setChecking(true);
     setVerdictData(null);
     setLogs([]);
@@ -676,6 +691,15 @@ export default function App() {
                     <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-wider">USDC Opt-In Active</span>
                   </div>
                 )}
+
+                <button 
+                  onClick={loadDemoWallet}
+                  disabled={walletLoading}
+                  className="w-full text-xs font-bold py-2 rounded-xl bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 hover:bg-brand-emerald/25 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-brand-emerald/5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Load Funded Demo Wallet (19.90 USDC)
+                </button>
 
                 <div className="flex gap-2">
                   <button 
