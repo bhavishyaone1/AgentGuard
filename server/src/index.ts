@@ -129,44 +129,56 @@ app.post("/api/check", async (c) => {
     let merchantData: any = null;
     let resourceData: any = null;
 
-    // Check if target is a valid Algorand address
-    const isAlgoAddr = isValidAlgorandAddress(merchantAddress);
-
-    if (isAlgoAddr) {
-      reasons.push("Input resolved to a valid Algorand address");
-      // Query merchant details directly
-      const merchantRes = await fetch(`${facilitatorUrl}/discovery/merchants/${merchantAddress}`, {
-        headers: { "Accept": "application/json" }
-      });
-      
-      if (merchantRes.ok) {
-        merchantData = await merchantRes.json();
-      }
-    } else {
-      reasons.push("Input resolved to a merchant endpoint/URL");
-      // Search for resource matching the endpoint URL
-      const resourceRes = await fetch(`${facilitatorUrl}/discovery/resources?search=${encodeURIComponent(merchantAddress)}`, {
+    // Strategy 1: If input is a URL or hostname, search discovery resources
+    try {
+      const cleanSearch = merchantAddress.replace(/^https?:\/\//, '').split('/')[0];
+      const resourceRes = await fetch(`${facilitatorUrl}/discovery/resources?search=${encodeURIComponent(cleanSearch)}`, {
         headers: { "Accept": "application/json" }
       });
 
       if (resourceRes.ok) {
         const resourcesList: any = await resourceRes.json();
         if (resourcesList.items && resourcesList.items.length > 0) {
-          // Find resource that matches merchantAddress
           resourceData = resourcesList.items.find((res: any) => 
             res.resourceUrl?.toLowerCase().includes(merchantAddress.toLowerCase())
           ) || resourcesList.items[0];
 
           if (resourceData && resourceData.merchantId) {
-            // Fetch merchant data by ID
             const merchantRes = await fetch(`${facilitatorUrl}/discovery/merchants/${resourceData.merchantId}`, {
               headers: { "Accept": "application/json" }
             });
             if (merchantRes.ok) {
               merchantData = await merchantRes.json();
+              reasons.push("Input resolved to a registered merchant endpoint");
             }
           }
         }
+      }
+    } catch (e: any) {
+      console.warn("Resource search failed:", e.message);
+    }
+
+    // Strategy 2: If not found, query facilitator merchants index by address or ID
+    if (!merchantData) {
+      try {
+        const merchantsRes = await fetch(`${facilitatorUrl}/discovery/merchants`, {
+          headers: { "Accept": "application/json" }
+        });
+        if (merchantsRes.ok) {
+          const mList: any = await merchantsRes.json();
+          if (mList.items && mList.items.length > 0) {
+            merchantData = mList.items.find((m: any) => 
+              m.id === merchantAddress || 
+              m.addresses?.avm === merchantAddress || 
+              (m.addresses && Object.values(m.addresses).some((a: any) => String(a).toLowerCase() === merchantAddress.toLowerCase()))
+            );
+            if (merchantData) {
+              reasons.push("Input resolved to a registered Algorand merchant address");
+            }
+          }
+        }
+      } catch (e: any) {
+        console.warn("Merchants list search failed:", e.message);
       }
     }
 

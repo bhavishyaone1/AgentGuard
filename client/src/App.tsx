@@ -41,11 +41,11 @@ const DEMO_MERCHANTS = [
     status: "trusted"
   },
   { 
-    name: "GoPlausible", 
-    tag: "Bazaar Registry", 
-    desc: "Decentralized service catalog cataloging AI merchants.",
-    address: "GDOR5JNJX6K4T2F76NZB7UOW2P5HVDMTGNDV6L6L437435KJZ4Z6U37E",
-    status: "verified"
+    name: "Compx Amarok API", 
+    tag: "Verified On-Chain", 
+    desc: "Active Algorand merchant with 18,800+ on-chain verifications.",
+    address: "XJCCGGJ6FL6CFYNXCTO6Q5YQ7E2OIYVRX2G3BVZUF4JOL36HSJRPLYHW5E",
+    status: "trusted"
   },
   { 
     name: "Unknown Scammer Mock", 
