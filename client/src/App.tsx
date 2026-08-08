@@ -380,32 +380,44 @@ export default function App() {
       ></div>
 
       {/* Floating Glass Navbar */}
-      <header className={`fixed top-4 left-1/2 -translate-x-1/2 w-[92%] max-w-5xl rounded-full z-50 transition-all duration-300 ${
+      <header className={`fixed top-4 left-1/2 -translate-x-1/2 w-[94%] max-w-6xl rounded-full z-50 transition-all duration-300 ${
         navbarShrunk 
-          ? "bg-bg-navy-light/75 border-white/10 shadow-2xl py-3 px-6 backdrop-blur-lg" 
-          : "bg-transparent border-transparent py-5 px-8"
-      } border flex justify-between items-center`}>
+          ? "bg-bg-navy-light/80 border-white/10 shadow-2xl py-3 px-6 backdrop-blur-xl" 
+          : "bg-bg-navy/40 border-white/5 py-4 px-8 backdrop-blur-md"
+      } border flex justify-between items-center shadow-lg shadow-black/40`}>
         <div className="flex items-center gap-3">
-          <span className="font-extrabold text-sm tracking-tight font-display text-white">AgentGuard</span>
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-violet to-brand-blue flex items-center justify-center shadow-md shadow-brand-violet/20">
+            <ShieldCheck className="w-4.5 h-4.5 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-sm tracking-tight font-display text-white flex items-center gap-2">
+              AgentGuard
+              <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse"></span>
+                Algorand Testnet Live
+              </span>
+            </span>
+          </div>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1.5">
+        <nav className="hidden md:flex items-center gap-1">
           {["Platform", "Solution", "Sandbox", "Features", "Architecture", "FAQ"].map((sect) => (
             <a 
               key={sect}
               href={`#${sect.toLowerCase()}`}
-              className="text-xs font-semibold text-text-secondary hover:text-white px-3.5 py-1.5 rounded-full transition-all hover:bg-white/5"
+              className="text-xs font-semibold text-text-secondary hover:text-white px-3.5 py-1.5 rounded-full transition-all hover:bg-white/5 cursor-pointer"
             >
               {sect}
             </a>
           ))}
         </nav>
 
-        <div>
+        <div className="flex items-center gap-3">
           <a 
             href="#sandbox"
-            className="text-[10px] font-extrabold bg-white hover:bg-white/95 text-bg-navy-dark px-4 py-2 rounded-full transition-all uppercase tracking-wider shadow-md shadow-white/5 font-display"
+            className="text-[10px] font-extrabold bg-gradient-to-r from-brand-violet to-brand-blue hover:from-brand-violet/90 hover:to-brand-blue/90 text-white px-4.5 py-2 rounded-full transition-all uppercase tracking-wider shadow-lg shadow-brand-violet/20 font-display flex items-center gap-1.5 cursor-pointer"
           >
+            <Sparkles className="w-3 h-3" />
             Launch Console
           </a>
         </div>
@@ -1415,18 +1427,55 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
       {/* 8. Futuristic Footer */}
       <footer className="w-full max-w-7xl mx-auto px-6 py-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
         
-        {/* Footer logo */}
+        {/* Footer logo & info */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold font-display text-white">AgentGuard</span>
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-violet to-brand-blue flex items-center justify-center">
+            <ShieldCheck className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="text-xs font-bold font-display text-white">AgentGuard Protocol</span>
         </div>
 
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-text-secondary text-center md:text-left">
           © 2026 AgentGuard. Autonomous Micropayment Security Infrastructure · Secured on Algorand.
         </p>
 
-        {/* Social link placeholder icons */}
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Algorand Network</span>
+        {/* Ecosystem Links */}
+        <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-text-secondary">
+          <a 
+            href="https://github.com/bhavishyaone1/AgentGuard" 
+            target="_blank" 
+            rel="noreferrer"
+            className="hover:text-white transition-colors flex items-center gap-1"
+          >
+            GitHub
+          </a>
+          <span className="text-white/10">•</span>
+          <a 
+            href="https://agentguard.bakshibhavi.workers.dev/api/health" 
+            target="_blank" 
+            rel="noreferrer"
+            className="hover:text-brand-emerald transition-colors flex items-center gap-1"
+          >
+            API Status
+          </a>
+          <span className="text-white/10">•</span>
+          <a 
+            href="https://bank.testnet.algorand.network/" 
+            target="_blank" 
+            rel="noreferrer"
+            className="hover:text-brand-blue transition-colors flex items-center gap-1"
+          >
+            Algorand Faucet
+          </a>
+          <span className="text-white/10">•</span>
+          <a 
+            href="https://facilitator.goplausible.xyz" 
+            target="_blank" 
+            rel="noreferrer"
+            className="hover:text-brand-violet transition-colors flex items-center gap-1"
+          >
+            GoPlausible Bazaar
+          </a>
         </div>
 
       </footer>
