@@ -623,54 +623,12 @@ export default function App() {
         {/* ============================================================ */}
         <section id="sandbox" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
           
-          <div className="text-center mb-8">
+          <div className="text-center mb-16">
             <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest font-display">Live Interactive Sandbox</span>
             <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Simulate an Autonomous AI Payment</h2>
             <p className="text-text-secondary text-sm mt-3 max-w-lg mx-auto">
               Test the pre-payment spend policy firewall in real-time. Select a merchant preset or test custom targets.
             </p>
-          </div>
-
-          {/* Quick Start 3-Step Workflow Banner */}
-          <div className="bg-bg-navy-dark border border-brand-violet/20 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-violet/10 flex items-center justify-center shrink-0 border border-brand-violet/20">
-                <Zap className="w-5 h-5 text-brand-violet" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white uppercase tracking-wider font-display">How to Test in 3 Simple Steps</span>
-                <span className="text-[11px] text-text-secondary">Zero-friction on-chain simulation:</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto flex-1 max-w-3xl">
-              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
-                <span className="text-[10px] font-bold text-brand-emerald uppercase flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Step 1: Wallet Setup
-                </span>
-                <span className="text-text-secondary leading-relaxed">
-                  Click <b className="text-white">Load Demo Wallet</b> (instant 19.90 USDC) or fund with <b>ALGO + Opt-In</b> from Dispenser.
-                </span>
-              </div>
-
-              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
-                <span className="text-[10px] font-bold text-brand-blue uppercase flex items-center gap-1">
-                  <Server className="w-3 h-3" /> Step 2: Pick Target
-                </span>
-                <span className="text-text-secondary leading-relaxed">
-                  Choose <b className="text-white">ALGOMetrics</b> (Safe), <b className="text-white">Compx</b> (Caution), or <b className="text-white">Scammer Mock</b> (Blocked).
-                </span>
-              </div>
-
-              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
-                <span className="text-[10px] font-bold text-brand-cyan uppercase flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Step 3: Run Check
-                </span>
-                <span className="text-text-secondary leading-relaxed">
-                  Click <b className="text-white">Execute Check</b> ($0.01 fee) to see live on-chain verdict and transaction receipt!
-                </span>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -758,14 +716,6 @@ export default function App() {
                     </div>
                   )}
 
-                  <button 
-                    onClick={loadDemoWallet}
-                    disabled={walletLoading}
-                    className="w-full text-[11px] font-bold py-1.5 px-3 rounded-lg bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/20 hover:bg-brand-emerald/20 transition-all uppercase tracking-wider flex items-center justify-center cursor-pointer shadow-sm"
-                  >
-                    Load Funded Demo Wallet (19.90 USDC)
-                  </button>
-
                   <div className="flex gap-2">
                     <button 
                       onClick={executeOptIn}
@@ -784,9 +734,19 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Mnemonic Copy */}
+                {/* Mnemonic Copy & Discreet Demo Load */}
                 <div className="border-t border-white/5 pt-3 flex justify-between items-center text-xs">
-                  <span className="font-semibold text-text-secondary text-[11px]">Secret Mnemonic</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-text-secondary text-[11px]">Secret Mnemonic</span>
+                    <button 
+                      onClick={loadDemoWallet}
+                      disabled={walletLoading}
+                      className="text-[10px] font-bold text-brand-emerald hover:underline cursor-pointer transition-colors"
+                      title="Load pre-funded demo keys"
+                    >
+                      (Demo)
+                    </button>
+                  </div>
                   <button 
                     onClick={() => copyToClipboard(payerMnemonic, setCopiedMnemonic)}
                     className="text-[10px] font-bold text-brand-violet hover:underline flex items-center gap-1.5 cursor-pointer"
