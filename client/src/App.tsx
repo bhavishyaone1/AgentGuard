@@ -33,9 +33,27 @@ const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
 
 // Presets
 const DEMO_MERCHANTS = [
-  { name: "ALGOMetrics (Trusted Live API)", address: "api.algometrics.org", type: "endpoint" },
-  { name: "GoPlausible (Discovery Registry)", address: "GDOR5JNJX6K4T2F76NZB7UOW2P5HVDMTGNDV6L6L437435KJZ4Z6U37E", type: "address" },
-  { name: "Unregistered (High Risk)", address: "7Y4TGDJSHS5J4LHGKSLK5HJSKL44JLJDFSLDJKDFSD45FDGDFGDFGDG2", type: "address" }
+  { 
+    name: "ALGOMetrics API", 
+    tag: "Trusted Live Vendor", 
+    desc: "Active market data API with 90+ verified settlements.",
+    address: "api.algometrics.org",
+    status: "trusted"
+  },
+  { 
+    name: "GoPlausible", 
+    tag: "Bazaar Registry", 
+    desc: "Decentralized service catalog cataloging AI merchants.",
+    address: "GDOR5JNJX6K4T2F76NZB7UOW2P5HVDMTGNDV6L6L437435KJZ4Z6U37E",
+    status: "verified"
+  },
+  { 
+    name: "Unknown Scammer Mock", 
+    tag: "High-Risk Mock", 
+    desc: "Fake address with 0 history. Tests firewall blocking.",
+    address: "7Y4TGDJSHS5J4LHGKSLK5HJSKL44JLJDFSLDJKDFSD45FDGDFGDFGDG2",
+    status: "high_risk"
+  }
 ];
 
 export default function App() {
@@ -804,7 +822,7 @@ export default function App() {
                   Target Merchant Query
                 </h3>
                 <p className="text-[10px] text-text-secondary leading-normal mt-1">
-                  Select a preset merchant to test different combinations of registry trust scores and claimed payment prices.
+                  In autonomous AI commerce, a <b>Merchant</b> is any paid API, data provider, or cloud service your AI agent wants to buy from. Select a preset below to test:
                 </p>
               </div>
 
@@ -815,20 +833,28 @@ export default function App() {
                     key={m.name}
                     onClick={() => {
                       setTargetMerchant(m.address);
-                      if (m.name.includes("Trusted")) {
+                      if (m.status === "trusted") {
                         setClaimedPriceAmt("10000"); // 0.01 USDC
                       } else {
                         setClaimedPriceAmt("15000"); // 0.015 USDC
                       }
                     }}
-                    className={`p-3.5 text-left rounded-xl border transition-all text-xs flex flex-col gap-1.5 ${
+                    className={`p-3.5 text-left rounded-xl border transition-all text-xs flex flex-col gap-2 cursor-pointer ${
                       targetMerchant === m.address 
-                        ? 'bg-brand-blue/8 border-brand-blue' 
+                        ? 'bg-brand-blue/8 border-brand-blue shadow-lg shadow-brand-blue/5' 
                         : 'bg-bg-navy-dark border-white/5 hover:border-white/10'
                     }`}
                   >
-                    <span className="font-bold text-white leading-normal truncate w-full">{m.name}</span>
-                    <span className="text-[9px] font-mono text-text-secondary truncate w-full">{m.address}</span>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-bold text-white leading-normal truncate">{m.name}</span>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase shrink-0 ${
+                        m.status === "trusted" ? 'bg-brand-emerald/15 text-brand-emerald' :
+                        m.status === "verified" ? 'bg-brand-blue/15 text-brand-blue' :
+                        'bg-brand-rose/15 text-brand-rose'
+                      }`}>{m.tag}</span>
+                    </div>
+                    <p className="text-[9.5px] text-text-secondary leading-relaxed line-clamp-2">{m.desc}</p>
+                    <span className="text-[8.5px] font-mono text-text-faint truncate mt-auto border-t border-white/5 pt-1.5">{m.address}</span>
                   </button>
                 ))}
               </div>
