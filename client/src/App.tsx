@@ -846,19 +846,9 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Mnemonic Copy & Discreet Demo Load */}
+                {/* Mnemonic Copy */}
                 <div className="border-t border-white/5 pt-3 flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-text-secondary text-[11px]">Secret Mnemonic</span>
-                    <button 
-                      onClick={loadDemoWallet}
-                      disabled={walletLoading}
-                      className="text-[10px] font-bold text-brand-emerald hover:underline cursor-pointer transition-colors"
-                      title="Load pre-funded demo keys"
-                    >
-                      (Demo)
-                    </button>
-                  </div>
+                  <span className="font-semibold text-text-secondary text-[11px]">Secret Mnemonic</span>
                   <button 
                     onClick={() => copyToClipboard(payerMnemonic, setCopiedMnemonic)}
                     className="text-[10px] font-bold text-brand-violet hover:underline flex items-center gap-1.5 cursor-pointer"
@@ -876,6 +866,32 @@ export default function App() {
                     )}
                   </button>
                 </div>
+              </motion.div>
+
+              {/* Quick Demo Wallet Loader Card above Spend Policy */}
+              <motion.div 
+                whileHover={{ y: -2 }}
+                className="bg-bg-navy-dark border border-brand-emerald/20 p-4.5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-brand-emerald/5 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-brand-emerald/15 flex items-center justify-center text-brand-emerald shrink-0">
+                    <Wallet className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider font-display">Instant Testing Wallet</span>
+                    <span className="text-[11px] text-text-secondary leading-normal">Pre-funded keys with 59.56 USDC & 0.999 ALGO (Opt-in Active)</span>
+                  </div>
+                </div>
+
+                <motion.button 
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={loadDemoWallet}
+                  disabled={walletLoading}
+                  className="w-full sm:w-auto text-[11px] font-black bg-brand-emerald text-[#050505] px-4.5 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-md hover:bg-brand-emerald/90 cursor-pointer shrink-0 font-display text-center"
+                >
+                  Load Demo Wallet
+                </motion.button>
               </motion.div>
 
               {/* Spend Policy Panel */}
