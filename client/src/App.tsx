@@ -20,6 +20,7 @@ import {
   Zap,
   Globe
 } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import algosdk from "algosdk";
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { ExactAvmScheme } from "@x402/avm/exact/client";
@@ -62,6 +63,14 @@ const DEMO_MERCHANTS = [
 ];
 
 export default function App() {
+  // Framer Motion Scroll Progress
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   // Active Section for Scroll-Spy
   const [activeSection, setActiveSection] = useState<string>("platform");
 
@@ -161,7 +170,7 @@ export default function App() {
   const loadDemoWallet = () => {
     const DEMO_MNEMONIC = "sun sign term dash tube control method lumber elephant cause illegal arch pioneer soccer juice search isolate chimney thunder course liquid alarm element able catalog";
     recoverWallet(DEMO_MNEMONIC);
-    addLog("Loaded funded testnet demo wallet (19.90 USDC, Opt-In Active).", "success");
+    addLog("Loaded funded testnet demo wallet (59.56 USDC, Opt-In Active).", "success");
   };
 
   const recoverWallet = async (mnemonic: string) => {
@@ -251,7 +260,7 @@ export default function App() {
       setLogs([]);
       addLog("Insufficient Testnet Balance or Missing USDC Opt-In.", "warn");
       addLog(`Current balance: ${usdcBalance.toFixed(2)} USDC (Requires $0.01 USDC check fee).`, "error");
-      addLog("Tip: Click 'Load Funded Demo Wallet' on the left to test instantly with 19.90 USDC.", "info");
+      addLog("Tip: Click '(Demo)' next to Secret Mnemonic to test instantly with pre-funded keys.", "info");
       return;
     }
 
@@ -376,6 +385,12 @@ export default function App() {
   return (
     <div className="min-h-screen text-text-primary flex flex-col relative overflow-hidden bg-[#050505] selection:bg-brand-violet selection:text-white">
       
+      {/* Top Animated Scroll Progress Bar */}
+      <motion.div 
+        className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-brand-violet via-brand-blue to-brand-emerald origin-left z-[100]" 
+        style={{ scaleX }} 
+      />
+
       {/* Background Aurora & Grid Pattern */}
       <div className="aurora-bg"></div>
       <div className="grid-overlay"></div>
@@ -419,12 +434,14 @@ export default function App() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a 
+          <motion.a 
             href="#sandbox"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             className="text-[10px] font-extrabold bg-gradient-to-r from-brand-violet to-brand-blue hover:from-brand-violet/90 hover:to-brand-blue/90 text-white px-5 py-2 rounded-full transition-all uppercase tracking-wider shadow-lg shadow-brand-violet/20 font-display cursor-pointer"
           >
             Launch Console
-          </a>
+          </motion.a>
         </div>
       </header>
 
@@ -434,7 +451,13 @@ export default function App() {
         {/* ============================================================ */}
         {/* SECTION 1: HERO & PLATFORM OVERVIEW                         */}
         {/* ============================================================ */}
-        <section id="platform" className="reveal-section grid grid-cols-1 lg:grid-cols-12 gap-12 items-center pt-8 scroll-mt-32">
+        <motion.section 
+          id="platform" 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center pt-8 scroll-mt-32"
+        >
           {/* Left Column Text */}
           <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-brand-violet/8 border border-brand-violet/15 px-3.5 py-1.5 rounded-full w-fit mx-auto lg:mx-0 shadow-lg shadow-brand-violet/5">
@@ -451,18 +474,22 @@ export default function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mt-2">
-              <a 
+              <motion.a 
                 href="#sandbox" 
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 className="w-full sm:w-auto text-xs font-extrabold bg-gradient-to-r from-brand-violet via-brand-blue to-brand-cyan text-white px-7 py-4 rounded-full glow-btn-primary uppercase tracking-wider font-display text-center cursor-pointer"
               >
                 Enter Sandbox →
-              </a>
-              <a 
+              </motion.a>
+              <motion.a 
                 href="#solution" 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className="w-full sm:w-auto text-xs font-extrabold border border-white/10 hover:border-white/20 text-text-primary px-7 py-4 rounded-full transition-all uppercase tracking-wider bg-white/3 text-center cursor-pointer"
               >
                 Read Protocol Flow
-              </a>
+              </motion.a>
             </div>
 
             {/* Quick Metrics */}
@@ -509,12 +536,19 @@ export default function App() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 2: SPEND VULNERABILITY VS SOLUTION                  */}
         {/* ============================================================ */}
-        <section id="solution" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="solution" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Panel: Problem */}
             <div className="flex flex-col gap-6">
@@ -527,7 +561,10 @@ export default function App() {
                 Autonomous agents execute transactions via script-based instructions. Without a middleman firewall, agents cannot evaluate merchant reputation or policy matching before signing a payment, exposing vaults to drainage loops and rug-pulls.
               </p>
               
-              <div className="bg-bg-navy-dark/40 border border-brand-rose/15 p-4.5 rounded-xl flex flex-col gap-2">
+              <motion.div 
+                whileHover={{ y: -3 }}
+                className="bg-bg-navy-dark/40 border border-brand-rose/15 p-4.5 rounded-xl flex flex-col gap-2 transition-all"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono text-brand-rose font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
@@ -540,7 +577,7 @@ export default function App() {
                   <div>Registry Status: <span className="text-brand-rose font-bold">UNREGISTERED</span></div>
                   <div className="col-span-2 text-brand-rose font-bold mt-0.5">Status: Exposed (Wallet Drained)</div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Right Panel: Solution */}
@@ -554,7 +591,10 @@ export default function App() {
                 AgentGuard proxies the x402 payment lifecycle on the Algorand blockchain. Our decentralized verification checks the target endpoint against GoPlausible Bazaar registry data and enforces local spend limits before funds transfer.
               </p>
 
-              <div className="bg-bg-navy-dark/40 border border-brand-emerald/15 p-4.5 rounded-xl flex flex-col gap-2">
+              <motion.div 
+                whileHover={{ y: -3 }}
+                className="bg-bg-navy-dark/40 border border-brand-emerald/15 p-4.5 rounded-xl flex flex-col gap-2 transition-all"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono text-brand-emerald font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -567,15 +607,22 @@ export default function App() {
                   <div>Registry Status: <span className="text-brand-emerald font-bold">VERIFIED SAFE</span></div>
                   <div className="col-span-2 text-brand-emerald font-bold mt-0.5">Status: Blocked/Approved by Rules</div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 3: PROTOCOL ARCHITECTURE PIPELINE                   */}
         {/* ============================================================ */}
-        <section id="architecture" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="architecture" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           <div className="text-center mb-16">
             <span className="text-[10px] font-bold text-brand-violet uppercase tracking-widest font-display">System Integrity</span>
             <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Interactive Protocol Architecture</h2>
@@ -599,7 +646,11 @@ export default function App() {
                 const isPassed = currentStep >= node.activeStep;
                 const isActive = currentStep === node.activeStep;
                 return (
-                  <div key={index} className="flex flex-col items-center gap-3.5 z-10 relative bg-[#050505] px-4">
+                  <motion.div 
+                    key={index} 
+                    whileHover={{ scale: 1.05 }}
+                    className="flex flex-col items-center gap-3.5 z-10 relative bg-[#050505] px-4 cursor-pointer"
+                  >
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 shadow-xl ${
                       isActive ? 'bg-brand-violet/20 border-brand-violet text-brand-violet scale-110 shadow-brand-violet/20' :
                       isPassed ? 'bg-brand-emerald/15 border-brand-emerald text-brand-emerald' :
@@ -611,17 +662,24 @@ export default function App() {
                       <span className="text-xs font-bold text-white font-display">{node.label}</span>
                       <span className="text-[10px] text-text-secondary max-w-[120px]">{node.desc}</span>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 4: LIVE SECURITY SANDBOX CONSOLE                    */}
         {/* ============================================================ */}
-        <section id="sandbox" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="sandbox" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           
           <div className="text-center mb-16">
             <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest font-display">Live Interactive Sandbox</span>
@@ -636,7 +694,10 @@ export default function App() {
             <div className="lg:col-span-5 flex flex-col gap-6">
               
               {/* Payer Wallet Card */}
-              <div className="premium-card rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden">
+              <motion.div 
+                whileHover={{ y: -2 }}
+                className="premium-card rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden transition-all"
+              >
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                     <Wallet className="w-4 h-4 text-brand-emerald" />
@@ -717,20 +778,24 @@ export default function App() {
                   )}
 
                   <div className="flex gap-2">
-                    <button 
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={executeOptIn}
                       disabled={walletLoading || isOptedIn}
                       className="flex-1 text-xs font-bold py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 transition-colors uppercase tracking-wider cursor-pointer"
                     >
                       Opt-in to USDC
-                    </button>
-                    <button 
+                    </motion.button>
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={generateNewWallet}
                       disabled={walletLoading}
                       className="text-xs font-bold py-2.5 px-4 rounded-xl border border-white/10 hover:bg-white/5 transition-colors uppercase tracking-wider cursor-pointer"
                     >
                       Generate
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 
@@ -764,10 +829,13 @@ export default function App() {
                     )}
                   </button>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Spend Policy Panel */}
-              <div className="premium-card rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden">
+              <motion.div 
+                whileHover={{ y: -2 }}
+                className="premium-card rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden transition-all"
+              >
                 <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-brand-violet" />
                   Spend Policy Rules
@@ -810,7 +878,7 @@ export default function App() {
                     Fails check when the remaining aggregated daily budget is crossed.
                   </span>
                 </div>
-              </div>
+              </motion.div>
 
             </div>
 
@@ -818,7 +886,10 @@ export default function App() {
             <div className="lg:col-span-7 flex flex-col gap-6">
               
               {/* Target Settings Card */}
-              <div className="premium-card rounded-2xl p-6 flex flex-col gap-5">
+              <motion.div 
+                whileHover={{ y: -2 }}
+                className="premium-card rounded-2xl p-6 flex flex-col gap-5 transition-all"
+              >
                 <div className="flex flex-col gap-1">
                   <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                     <Server className="w-4 h-4 text-brand-blue" />
@@ -832,8 +903,10 @@ export default function App() {
                 {/* Merchant Presets Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {DEMO_MERCHANTS.map((m) => (
-                    <button 
+                    <motion.button 
                       key={m.name}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         setTargetMerchant(m.address);
                         setClaimedPriceAmt(m.defaultPrice);
@@ -854,7 +927,7 @@ export default function App() {
                       </div>
                       <p className="text-[9.5px] text-text-secondary leading-relaxed line-clamp-2">{m.desc}</p>
                       <span className="text-[8.5px] font-mono text-text-faint truncate mt-auto border-t border-white/5 pt-1.5">{m.address}</span>
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
 
@@ -883,7 +956,9 @@ export default function App() {
                 </div>
 
                 {/* Submit Button */}
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handlePrePaymentCheck}
                   disabled={checking}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-brand-violet via-brand-blue to-brand-cyan text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-brand-violet/20 font-display"
@@ -899,11 +974,14 @@ export default function App() {
                       Execute Pre-payment Check ($0.01 USDC Fee)
                     </>
                   )}
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
 
               {/* Live Terminal Log */}
-              <div className="premium-card rounded-2xl p-6 flex flex-col gap-3">
+              <motion.div 
+                whileHover={{ y: -2 }}
+                className="premium-card rounded-2xl p-6 flex flex-col gap-3 transition-all"
+              >
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                     <TerminalIcon className="w-4 h-4 text-brand-cyan" />
@@ -932,140 +1010,157 @@ export default function App() {
                     ))
                   )}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Verdict Display Section */}
-              {verdictData && (
-                <div className={`premium-card rounded-2xl p-6 border-l-4 transition-all duration-300 relative overflow-hidden flex flex-col gap-5 ${
-                  verdictData.trust?.verdict === "trusted" ? 'border-l-brand-emerald' : 'border-l-brand-rose'
-                }`}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        verdictData.trust?.verdict === "trusted" ? 'bg-brand-emerald/10' : 'bg-brand-rose/10'
-                      }`}>
-                        {verdictData.trust?.verdict === "trusted" ? (
-                          <ShieldCheck className="w-6 h-6 text-brand-emerald" />
-                        ) : (
-                          <ShieldAlert className="w-6 h-6 text-brand-rose" />
-                        )}
+              {/* Verdict Display Section with Framer Motion AnimatePresence */}
+              <AnimatePresence>
+                {verdictData && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className={`premium-card rounded-2xl p-6 border-l-4 transition-all duration-300 relative overflow-hidden flex flex-col gap-5 ${
+                      verdictData.trust?.verdict === "trusted" ? 'border-l-brand-emerald' : 'border-l-brand-rose'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          verdictData.trust?.verdict === "trusted" ? 'bg-brand-emerald/10' : 'bg-brand-rose/10'
+                        }`}>
+                          {verdictData.trust?.verdict === "trusted" ? (
+                            <ShieldCheck className="w-6 h-6 text-brand-emerald" />
+                          ) : (
+                            <ShieldAlert className="w-6 h-6 text-brand-rose" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white uppercase tracking-wider font-display">
+                            Validation Verdict: {verdictData.trust?.verdict === "trusted" ? 'Trusted Merchant' : 'High Risk'}
+                          </h4>
+                          <p className="text-xs text-text-secondary mt-1">
+                            GoPlausible Discovery score & spend policy resolution
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-white uppercase tracking-wider font-display">
-                          Validation Verdict: {verdictData.trust?.verdict === "trusted" ? 'Trusted Merchant' : 'High Risk'}
-                        </h4>
-                        <p className="text-xs text-text-secondary mt-1">
-                          GoPlausible Discovery score & spend policy resolution
+
+                      <span className={`text-xs font-black px-3.5 py-1.5 rounded-lg font-mono ${
+                        verdictData.trust?.verdict === "trusted" ? 'bg-brand-emerald/15 text-brand-emerald' : 'bg-brand-rose/15 text-brand-rose'
+                      }`}>
+                        {verdictData.trust?.verdict === "trusted" ? 'PASS' : 'RISK'}
+                      </span>
+                    </div>
+
+                    {/* Animated Reputation Trust Gauge */}
+                    {verdictData.trust?.reputationScore !== undefined && (
+                      <div className="flex flex-col gap-2 bg-bg-navy-dark border border-white/5 p-4 rounded-xl">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            Reputation Trust Gauge
+                          </span>
+                          <span className="font-mono font-bold text-brand-emerald">
+                            {verdictData.trust.reputationScore} / 100
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${verdictData.trust.reputationScore}%` }}
+                            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                            className={`h-full rounded-full ${
+                              verdictData.trust.reputationScore >= 80 ? 'bg-gradient-to-r from-brand-emerald to-brand-blue' :
+                              verdictData.trust.reputationScore >= 50 ? 'bg-gradient-to-r from-brand-amber to-brand-rose' :
+                              'bg-brand-rose'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Safety Recommendation Banner */}
+                    {verdictData.trust?.verdict === "trusted" ? (
+                      <div className="bg-brand-emerald/8 border border-brand-emerald/15 p-3.5 rounded-xl flex items-start gap-2.5">
+                        <ShieldCheck className="w-4.5 h-4.5 text-brand-emerald shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-text-primary leading-normal">
+                          <b>Safe to Pay:</b> This merchant endpoint is registered and active on the GoPlausible Bazaar index. All local spend policies passed. AgentGuard recommends permitting the transaction.
                         </p>
                       </div>
-                    </div>
-
-                    <span className={`text-xs font-black px-3.5 py-1.5 rounded-lg font-mono ${
-                      verdictData.trust?.verdict === "trusted" ? 'bg-brand-emerald/15 text-brand-emerald' : 'bg-brand-rose/15 text-brand-rose'
-                    }`}>
-                      {verdictData.trust?.verdict === "trusted" ? 'PASS' : 'RISK'}
-                    </span>
-                  </div>
-
-                  {/* Animated Reputation Trust Gauge */}
-                  {verdictData.trust?.reputationScore !== undefined && (
-                    <div className="flex flex-col gap-2 bg-bg-navy-dark border border-white/5 p-4 rounded-xl">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-white flex items-center gap-1.5">
-                          Reputation Trust Gauge
-                        </span>
-                        <span className="font-mono font-bold text-brand-emerald">
-                          {verdictData.trust.reputationScore} / 100
-                        </span>
+                    ) : (
+                      <div className="bg-brand-rose/8 border border-brand-rose/15 p-3.5 rounded-xl flex items-start gap-2.5">
+                        <AlertTriangle className="w-4.5 h-4.5 text-brand-rose shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-text-primary leading-normal">
+                          <b>Blocked / High Risk:</b> The target is unregistered, has zero transaction history, or has violated your spend policy limits. AgentGuard has blocked this payment from signing.
+                        </p>
                       </div>
-                      <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-1000 ${
-                            verdictData.trust.reputationScore >= 80 ? 'bg-gradient-to-r from-brand-emerald to-brand-blue' :
-                            verdictData.trust.reputationScore >= 50 ? 'bg-gradient-to-r from-brand-amber to-brand-rose' :
-                            'bg-brand-rose'
-                          }`}
-                          style={{ width: `${verdictData.trust.reputationScore}%` }}
-                        ></div>
+                    )}
+
+                    {/* Verdict Info / Reasons Grid */}
+                    <div className="bg-bg-navy-dark border border-white/5 rounded-xl p-4 flex flex-col gap-2.5">
+                      <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Registry Verification Logic</span>
+                      {verdictData.trust?.reasons?.map((reason: string, idx: number) => (
+                        <div key={idx} className="flex items-start gap-2.5 text-xs text-text-primary leading-normal">
+                          <ArrowRight className="w-3.5 h-3.5 text-brand-violet shrink-0 mt-0.5" />
+                          <span>{reason}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Spend policy check and receipt */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5">
+                        <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">Local Spend Policy Decision</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                            verdictData.spendPolicy?.decision === "allow" ? 'bg-brand-emerald/10 text-brand-emerald' : 'bg-brand-rose/10 text-brand-rose'
+                          }`}>
+                            {verdictData.spendPolicy?.decision}
+                          </span>
+                          <span className="text-xs text-text-secondary font-medium leading-normal">
+                            {verdictData.spendPolicy?.reason}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Safety Recommendation Banner */}
-                  {verdictData.trust?.verdict === "trusted" ? (
-                    <div className="bg-brand-emerald/8 border border-brand-emerald/15 p-3.5 rounded-xl flex items-start gap-2.5">
-                      <ShieldCheck className="w-4.5 h-4.5 text-brand-emerald shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-text-primary leading-normal">
-                        <b>Safe to Pay:</b> This merchant endpoint is registered and active on the GoPlausible Bazaar index. All local spend policies passed. AgentGuard recommends permitting the transaction.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="bg-brand-rose/8 border border-brand-rose/15 p-3.5 rounded-xl flex items-start gap-2.5">
-                      <AlertTriangle className="w-4.5 h-4.5 text-brand-rose shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-text-primary leading-normal">
-                        <b>Blocked / High Risk:</b> The target is unregistered, has zero transaction history, or has violated your spend policy limits. AgentGuard has blocked this payment from signing.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Verdict Info / Reasons Grid */}
-                  <div className="bg-bg-navy-dark border border-white/5 rounded-xl p-4 flex flex-col gap-2.5">
-                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Registry Verification Logic</span>
-                    {verdictData.trust?.reasons?.map((reason: string, idx: number) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-text-primary leading-normal">
-                        <ArrowRight className="w-3.5 h-3.5 text-brand-violet shrink-0 mt-0.5" />
-                        <span>{reason}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Spend policy check and receipt */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5">
-                      <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">Local Spend Policy Decision</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                          verdictData.spendPolicy?.decision === "allow" ? 'bg-brand-emerald/10 text-brand-emerald' : 'bg-brand-rose/10 text-brand-rose'
-                        }`}>
-                          {verdictData.spendPolicy?.decision}
-                        </span>
-                        <span className="text-xs text-text-secondary font-medium leading-normal">
-                          {verdictData.spendPolicy?.reason}
-                        </span>
+                      <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5 justify-center">
+                        <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">AVM Testnet Settlement Receipt</span>
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          <span className="text-xs font-mono text-brand-blue font-bold truncate max-w-[170px]">
+                            {verdictData.settlement?.txId}
+                          </span>
+                          {verdictData.settlement?.txId && verdictData.settlement?.txId !== "unknown" && (
+                            <a 
+                              href={`https://lora.algokit.io/testnet/transaction/${verdictData.settlement.txId}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-brand-blue hover:underline flex items-center gap-1 font-bold tracking-tight"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              View Block
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5 justify-center">
-                      <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">AVM Testnet Settlement Receipt</span>
-                      <div className="flex items-center justify-between gap-2 mt-1">
-                        <span className="text-xs font-mono text-brand-blue font-bold truncate max-w-[170px]">
-                          {verdictData.settlement?.txId}
-                        </span>
-                        {verdictData.settlement?.txId && verdictData.settlement?.txId !== "unknown" && (
-                          <a 
-                            href={`https://lora.algokit.io/testnet/transaction/${verdictData.settlement.txId}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] text-brand-blue hover:underline flex items-center gap-1 font-bold tracking-tight"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            View Block
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 5: ALGORITHMIC SCORING MATRIX                       */}
         {/* ============================================================ */}
-        <section id="scoring" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="scoring" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           
           <div className="text-center mb-16">
             <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">Algorithmic Scoring Matrix</span>
@@ -1079,7 +1174,10 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             
             {/* 100 Tier */}
-            <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              className="premium-card p-5 rounded-2xl flex flex-col gap-3 transition-all"
+            >
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white">Verified Elite</span>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-emerald/15 text-brand-emerald font-mono">100 / 100</span>
@@ -1094,10 +1192,13 @@ export default function App() {
                 <span className="text-text-faint">ACTION:</span>
                 <span className="text-brand-emerald font-bold uppercase">PROCEED</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* 85 Tier */}
-            <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              className="premium-card p-5 rounded-2xl flex flex-col gap-3 transition-all"
+            >
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white">Trusted Vendor</span>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-blue/15 text-brand-blue font-mono">85 / 100</span>
@@ -1112,10 +1213,13 @@ export default function App() {
                 <span className="text-text-faint">ACTION:</span>
                 <span className="text-brand-blue font-bold uppercase">PROCEED</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* 50 Tier */}
-            <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              className="premium-card p-5 rounded-2xl flex flex-col gap-3 transition-all"
+            >
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white">Unverified New</span>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-amber/15 text-brand-amber font-mono">50 / 100</span>
@@ -1130,10 +1234,13 @@ export default function App() {
                 <span className="text-text-faint">ACTION:</span>
                 <span className="text-brand-amber font-bold uppercase">CAUTION</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* 15 Tier */}
-            <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              className="premium-card p-5 rounded-2xl flex flex-col gap-3 transition-all"
+            >
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-white">High Risk / Scam</span>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-rose/15 text-brand-rose font-mono">15 / 100</span>
@@ -1148,7 +1255,7 @@ export default function App() {
                 <span className="text-text-faint">ACTION:</span>
                 <span className="text-brand-rose font-bold uppercase">ABORT</span>
               </div>
-            </div>
+            </motion.div>
 
           </div>
 
@@ -1162,12 +1269,19 @@ export default function App() {
               </p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 6: AI AGENT DROP-IN SDK                            */}
         {/* ============================================================ */}
-        <section id="sdk" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="sdk" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           
           <div className="premium-card rounded-2xl p-7 flex flex-col gap-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1197,7 +1311,9 @@ export default function App() {
                   ))}
                 </div>
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     const snippets: Record<string, string> = {
                       ts: `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// All requests are audited on-chain before funds move!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();\nif (verdict.trust.recommendation === "proceed") {\n  console.log("Safe to pay merchant!");\n}`,
@@ -1211,7 +1327,7 @@ export default function App() {
                 >
                   {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedCode ? "Copied!" : "Copy Code"}
-                </button>
+                </motion.button>
               </div>
             </div>
 
@@ -1296,12 +1412,19 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             </div>
           </div>
 
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 7: SYSTEM FEATURES & FAQ                            */}
         {/* ============================================================ */}
-        <section id="features" className="reveal-section w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="features" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           <div className="text-center mb-16">
             <span className="text-[10px] font-bold text-brand-magenta uppercase tracking-widest font-display">System Features</span>
             <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Why Digital Infrastructure?</h2>
@@ -1321,9 +1444,10 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
-                <div 
+                <motion.div 
                   key={idx}
-                  className="premium-card rounded-2xl p-7 flex flex-col gap-4 relative overflow-hidden"
+                  whileHover={{ y: -4 }}
+                  className="premium-card rounded-2xl p-7 flex flex-col gap-4 relative overflow-hidden transition-all"
                 >
                   <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center self-start shadow-md`}>
                     <Icon className={`w-5.5 h-5.5 ${item.color}`} />
@@ -1332,16 +1456,23 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
                     <h4 className="font-extrabold text-white text-base font-display">{item.title}</h4>
                     <p className="text-xs text-text-secondary leading-relaxed">{item.desc}</p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-        </section>
+        </motion.section>
 
         {/* ============================================================ */}
         {/* SECTION 8: FAQ KNOWLEDGE BASE                               */}
         {/* ============================================================ */}
-        <section id="faq" className="reveal-section w-full max-w-4xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28">
+        <motion.section 
+          id="faq" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-4xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
+        >
           <div className="text-center mb-12">
             <span className="text-[10px] font-bold text-brand-violet uppercase tracking-widest font-display">Documentation</span>
             <h2 className="text-3xl font-black text-white font-display mt-2">Frequently Asked Questions</h2>
@@ -1349,8 +1480,9 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
 
           <div className="flex flex-col gap-4">
             {faqs.map((faq, idx) => (
-              <div 
+              <motion.div 
                 key={idx}
+                whileHover={{ y: -2 }}
                 className="premium-card rounded-2xl overflow-hidden transition-all duration-300"
               >
                 <button 
@@ -1368,10 +1500,10 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
                     {faq.a}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
       </main>
 
