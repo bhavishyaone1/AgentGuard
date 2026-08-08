@@ -386,18 +386,9 @@ export default function App() {
           : "bg-bg-navy/40 border-white/5 py-4 px-8 backdrop-blur-md"
       } border flex justify-between items-center shadow-lg shadow-black/40`}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-violet to-brand-blue flex items-center justify-center shadow-md shadow-brand-violet/20">
-            <ShieldCheck className="w-4.5 h-4.5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-sm tracking-tight font-display text-white flex items-center gap-2">
-              AgentGuard
-              <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse"></span>
-                Algorand Testnet Live
-              </span>
-            </span>
-          </div>
+          <span className="font-extrabold text-sm tracking-tight font-display text-white">
+            AgentGuard
+          </span>
         </div>
 
         <nav className="hidden md:flex items-center gap-1">
