@@ -249,20 +249,18 @@ body {
   transform: translate(-50%, -50%);
 }
 
-/* Scroll Reveal Animation Styles (Awwwards reveal effect) */
+/* Section Styles */
 .reveal-section {
-  opacity: 0;
-  transform: translateY(40px) scale(0.97);
-  filter: blur(5px);
-  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-              filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .reveal-section.revealed {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
+  transform: none;
+  filter: none;
 }
 
 /* Live Terminal Log Line entrance */
