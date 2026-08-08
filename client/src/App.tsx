@@ -95,7 +95,7 @@ export default function App() {
   // UI interaction states
   const [navbarShrunk, setNavbarShrunk] = useState<boolean>(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [codeTab, setCodeTab] = useState<"ts" | "py">("ts");
+  const [codeTab, setCodeTab] = useState<"ts" | "py" | "langchain" | "crewai">("ts");
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   
   // Custom cursor position state
@@ -1105,56 +1105,158 @@ export default function App() {
           </div>
         </div>
 
-        {/* 4b. Interactive Developer Integration Code Snippets */}
-        <div className="mt-12 premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest font-display">Developer Drop-In</span>
-              <h3 className="text-xl font-black text-white font-display mt-1">2-Line AI Agent Integration</h3>
-              <p className="text-xs text-text-secondary mt-1">Wrap your AI agent's fetch client to enforce spend limits & merchant checks automatically.</p>
+        {/* 4b. Interactive Scoring Engine Architecture & Multi-Framework Developer Drop-In */}
+        <div className="mt-16 flex flex-col gap-10">
+          
+          {/* Scoring Engine Breakdown Grid */}
+          <div className="premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+            <div className="flex flex-col gap-2 mb-8 text-center md:text-left">
+              <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">Algorithmic Scoring Matrix</span>
+              <h3 className="text-2xl font-black text-white font-display">How AgentGuard Calculates Trust (0–100)</h3>
+              <p className="text-xs text-text-secondary max-w-2xl">
+                Scores are calculated deterministically on-chain based on Bazaar registry discovery, historical settlement volume, and catalog price schemas.
+              </p>
             </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Tab selector */}
-              <div className="flex bg-bg-navy-dark border border-white/10 p-1 rounded-xl">
-                <button
-                  onClick={() => setCodeTab("ts")}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                    codeTab === "ts" ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
-                  }`}
-                >
-                  TypeScript (Node)
-                </button>
-                <button
-                  onClick={() => setCodeTab("py")}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                    codeTab === "py" ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
-                  }`}
-                >
-                  Python (AI Agent)
-                </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* 100 Tier */}
+              <div className="bg-bg-navy-dark border border-brand-emerald/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white">Verified Elite</span>
+                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-emerald/15 text-brand-emerald font-mono">100 / 100</span>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-emerald w-full rounded-full"></div>
+                </div>
+                <p className="text-[10.5px] text-text-secondary leading-relaxed">
+                  Registered in Bazaar + active settlements + claimed price <b>matches declared catalog schema</b>.
+                </p>
+                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+                  <span className="text-text-faint">ACTION:</span>
+                  <span className="text-brand-emerald font-bold uppercase">PROCEED ✅</span>
+                </div>
               </div>
 
-              {/* Copy code button */}
-              <button
-                onClick={() => {
-                  const tsCode = `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// 🚀 All requests are now verified by AgentGuard on-chain before payment!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();`;
-                  const pyCode = `import requests\nfrom x402 import wrap_session\n\n# Wrap your standard requests session with AgentGuard x402 firewall\nsession = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])\n\n# 🚀 Automatic pre-payment trust audit settled on Algorand!\nresponse = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n    "merchantAddress": "api.algometrics.org",\n    "claimedPrice": {"amount": "10000", "asset": "USDC"}\n})\nverdict = response.json()\nprint(f"Safety Decision: {verdict['trust']['recommendation']}")`;
-                  
-                  copyToClipboard(codeTab === "ts" ? tsCode : pyCode, setCopiedCode);
-                }}
-                className="p-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-1.5 text-text-primary cursor-pointer"
-              >
-                {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedCode ? "Copied!" : "Copy Code"}
-              </button>
+              {/* 85 Tier */}
+              <div className="bg-bg-navy-dark border border-brand-blue/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white">Trusted Vendor</span>
+                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-blue/15 text-brand-blue font-mono">85 / 100</span>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-blue w-[85%] rounded-full"></div>
+                </div>
+                <p className="text-[10.5px] text-text-secondary leading-relaxed">
+                  Registered in Bazaar with <b>proven settlement history</b> (e.g. 90+ verified settles on Algorand).
+                </p>
+                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+                  <span className="text-text-faint">ACTION:</span>
+                  <span className="text-brand-blue font-bold uppercase">PROCEED ✅</span>
+                </div>
+              </div>
+
+              {/* 50 Tier */}
+              <div className="bg-bg-navy-dark border border-brand-amber/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white">Unverified New</span>
+                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-amber/15 text-brand-amber font-mono">50 / 100</span>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-amber w-1/2 rounded-full"></div>
+                </div>
+                <p className="text-[10.5px] text-text-secondary leading-relaxed">
+                  Registered public key in index, but has <b>0 historical transactions</b> (brand-new provider).
+                </p>
+                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+                  <span className="text-text-faint">ACTION:</span>
+                  <span className="text-brand-amber font-bold uppercase">CAUTION ⚠️</span>
+                </div>
+              </div>
+
+              {/* 15 Tier */}
+              <div className="bg-bg-navy-dark border border-brand-rose/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white">High Risk / Scam</span>
+                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-rose/15 text-brand-rose font-mono">15 / 100</span>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-rose w-[15%] rounded-full"></div>
+                </div>
+                <p className="text-[10.5px] text-text-secondary leading-relaxed">
+                  <b>Unregistered target</b> or foreign-chain address with 0 record. Firewall blocks payment to save funds.
+                </p>
+                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+                  <span className="text-text-faint">ACTION:</span>
+                  <span className="text-brand-rose font-bold uppercase">ABORT 🛑</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Explainer Box: Why 15/100? */}
+            <div className="mt-6 bg-white/[0.02] border border-white/5 rounded-2xl p-4.5 flex items-start gap-3 text-xs text-text-secondary">
+              <AlertTriangle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
+              <div className="flex flex-col gap-1">
+                <span className="font-bold text-white">Why did my target address score 15/100?</span>
+                <p className="leading-normal text-[11px]">
+                  If an address is unregistered in the GoPlausible Bazaar index, has zero on-chain settlement record, or belongs to another network (like Ethereum/Etherscan), AgentGuard flags it as high risk to prevent wallet drainage.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Code block display */}
-          <div className="bg-[#050505] border border-white/10 rounded-2xl p-5 font-mono text-xs text-text-primary overflow-x-auto leading-relaxed">
-            {codeTab === "ts" ? (
-              <pre className="text-brand-blue/90">
+          {/* Multi-Framework Drop-In Code Card */}
+          <div className="premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest font-display">AI Agent Drop-In</span>
+                <h3 className="text-xl font-black text-white font-display mt-1">Multi-Framework Integration</h3>
+                <p className="text-xs text-text-secondary mt-1">Select your agent framework to view and copy the 3-line security wrapper.</p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Tab selectors */}
+                <div className="flex bg-bg-navy-dark border border-white/10 p-1 rounded-xl">
+                  {[
+                    { id: "ts", label: "TypeScript" },
+                    { id: "py", label: "Python (Native)" },
+                    { id: "langchain", label: "LangChain" },
+                    { id: "crewai", label: "CrewAI" }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setCodeTab(tab.id as any)}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                        codeTab === tab.id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Copy code button */}
+                <button
+                  onClick={() => {
+                    const snippets: Record<string, string> = {
+                      ts: `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// 🚀 All requests are verified by AgentGuard on-chain before payment!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();\nif (verdict.trust.recommendation === "proceed") {\n  console.log("Safe to pay merchant!");\n}`,
+                      py: `import requests\nfrom x402 import wrap_session\n\n# Wrap standard python session with AgentGuard firewall\nsession = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])\n\n# 🚀 Automated pre-payment trust audit on Algorand Testnet!\nresponse = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n    "merchantAddress": "api.algometrics.org",\n    "claimedPrice": {"amount": "10000", "asset": "USDC"}\n})\nverdict = response.json()\nif verdict["trust"]["recommendation"] == "proceed":\n    print("Safe to pay merchant! Releasing primary payment...")`,
+                      langchain: `from langchain.tools import tool\nimport requests\n\n@tool\ndef agentguard_pre_payment_check(merchant_url: str, amount_usdc: str) -> str:\n    """Audits a merchant endpoint on Algorand before releasing payment."""\n    res = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_url,\n        "claimedPrice": {"amount": amount_usdc, "asset": "USDC"}\n    })\n    verdict = res.json()\n    if verdict["trust"]["recommendation"] != "proceed":\n        raise Exception(f"Security Alert: High risk merchant blocked! ({verdict['trust']['reputationScore']}/100)")\n    return "VERIFIED SAFE: Proceed with purchase."`,
+                      crewai: `from crewai_tools import tool\nimport requests\n\n@tool("AgentGuard Security Gate")\ndef audit_merchant(merchant_address: str, price_base: str) -> str:\n    """Audits merchant trust and spend limits on Algorand before paying."""\n    r = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_address,\n        "claimedPrice": {"amount": price_base, "asset": "USDC"}\n    })\n    data = r.json()\n    return f"Verdict: {data['trust']['verdict'].upper()} (Score: {data['trust']['reputationScore']}/100)"`
+                    };
+                    copyToClipboard(snippets[codeTab], setCopiedCode);
+                  }}
+                  className="p-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-1.5 text-text-primary cursor-pointer shrink-0"
+                >
+                  {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedCode ? "Copied!" : "Copy Code"}
+                </button>
+              </div>
+            </div>
+
+            {/* Code block display */}
+            <div className="bg-[#050505] border border-white/10 rounded-2xl p-5 font-mono text-xs text-text-primary overflow-x-auto leading-relaxed">
+              {codeTab === "ts" && (
+                <pre className="text-brand-blue/90">
 {`import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { ExactAvmScheme } from "@x402/avm/exact/client";
 import { toClientAvmSigner } from "@x402/avm";
@@ -1172,10 +1274,14 @@ const res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/c
   body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })
 });
 const verdict = await res.json();
-console.log(verdict.trust.verdict); // "trusted"`}
-              </pre>
-            ) : (
-              <pre className="text-brand-emerald/90">
+if (verdict.trust.recommendation === "proceed") {
+  console.log("Safe to pay merchant!");
+}`}
+                </pre>
+              )}
+
+              {codeTab === "py" && (
+                <pre className="text-brand-emerald/90">
 {`import requests
 from x402 import wrap_session
 
@@ -1191,9 +1297,47 @@ response = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", 
 verdict = response.json()
 if verdict["trust"]["recommendation"] == "proceed":
     print("Safe to pay merchant! Releasing primary payment...")`}
-              </pre>
-            )}
+                </pre>
+              )}
+
+              {codeTab === "langchain" && (
+                <pre className="text-brand-violet/90">
+{`from langchain.tools import tool
+import requests
+
+@tool
+def agentguard_pre_payment_check(merchant_url: str, amount_usdc: str) -> str:
+    """Audits a merchant endpoint on Algorand before releasing payment."""
+    res = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={
+        "merchantAddress": merchant_url,
+        "claimedPrice": {"amount": amount_usdc, "asset": "USDC"}
+    })
+    verdict = res.json()
+    if verdict["trust"]["recommendation"] != "proceed":
+        raise Exception(f"Security Alert: High risk merchant blocked! ({verdict['trust']['reputationScore']}/100)")
+    return "VERIFIED SAFE: Proceed with purchase."`}
+                </pre>
+              )}
+
+              {codeTab === "crewai" && (
+                <pre className="text-brand-amber/90">
+{`from crewai_tools import tool
+import requests
+
+@tool("AgentGuard Security Gate")
+def audit_merchant(merchant_address: str, price_base: str) -> str:
+    """Audits merchant trust and spend limits on Algorand before paying."""
+    r = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={
+        "merchantAddress": merchant_address,
+        "claimedPrice": {"amount": price_base, "asset": "USDC"}
+    })
+    data = r.json()
+    return f"Verdict: {data['trust']['verdict'].upper()} (Score: {data['trust']['reputationScore']}/100)"`}
+                </pre>
+              )}
+            </div>
           </div>
+
         </div>
       </section>
 
