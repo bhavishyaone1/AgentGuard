@@ -12,7 +12,6 @@ import {
   RefreshCw, 
   Check, 
   Sliders,
-  Sparkles,
   Server,
   Layers,
   ChevronDown,
@@ -84,10 +83,10 @@ export default function App() {
   const getStepHelperText = () => {
     switch (currentStep) {
       case 0: return "Ready to start. Choose a merchant preset in the sandbox below and click 'Execute Check' to launch the flow.";
-      case 1: return "📡 Phase 1: Calling checking API. Server rejects with HTTP 402 Payment Required and returns payment requirements.";
-      case 2: return "🔑 Phase 2: x402 fetch wrapper intercepts 402. Recovering Payer wallet secret key and signing the USDC transaction group...";
-      case 3: return "⛓️ Phase 3: Submitting signed transaction group to Algorand Testnet. Waiting for block confirmation (~3.3s finality)...";
-      case 4: return "🎉 Phase 4: Payment confirmed! Hono server queries GoPlausible registry, runs spend rules, and returns final verdict.";
+      case 1: return "Phase 1: Calling checking API. Server rejects with HTTP 402 Payment Required and returns payment requirements.";
+      case 2: return "Phase 2: x402 fetch wrapper intercepts 402. Recovering Payer wallet secret key and signing the USDC transaction group...";
+      case 3: return "Phase 3: Submitting signed transaction group to Algorand Testnet. Waiting for block confirmation (~3.3s finality)...";
+      case 4: return "Phase 4: Payment confirmed! Hono server queries GoPlausible registry, runs spend rules, and returns final verdict.";
       default: return "";
     }
   };
@@ -263,9 +262,9 @@ export default function App() {
 
     if (!isOptedIn || usdcBalance < 0.01) {
       setLogs([]);
-      addLog("⚠️ Insufficient Testnet Balance or Missing USDC Opt-In.", "warn");
+      addLog("Insufficient Testnet Balance or Missing USDC Opt-In.", "warn");
       addLog(`Current balance: ${usdcBalance.toFixed(2)} USDC (Requires $0.01 USDC check fee).`, "error");
-      addLog("💡 Tip: Click 'Load Funded Demo Wallet' on the left to test instantly with 19.90 USDC!", "info");
+      addLog("Tip: Click 'Load Funded Demo Wallet' on the left to test instantly with 19.90 USDC.", "info");
       return;
     }
 
@@ -274,7 +273,7 @@ export default function App() {
     setLogs([]);
     setCurrentStep(1);
 
-    addLog("🤖 AI Agent initiating pre-payment trust validation...", "info");
+    addLog("AI Agent initiating pre-payment trust validation...", "info");
     addLog(`Target Endpoint/Address: ${targetMerchant}`, "info");
     addLog(`Claimed Price: ${(Number(claimedPriceAmt) / 1000000).toFixed(6)} USDC (${claimedPriceAmt} base)`, "info");
 
@@ -284,14 +283,14 @@ export default function App() {
       const clientSigner = {
         address: account.addr,
         signTransactions: async (txns: Uint8Array[], indexesToSign?: number[]): Promise<(Uint8Array | null)[]> => {
-          addLog("🔑 SDK requested payment signatures. Signing AVM transaction group...", "info");
+          addLog("SDK requested payment signatures. Signing AVM transaction group...", "info");
           setCurrentStep(2);
           const signed = txns.map((txnBytes, i) => {
             if (indexesToSign && !indexesToSign.includes(i)) return null;
             const txn = algosdk.decodeUnsignedTransaction(txnBytes);
             return txn.signTxn(account.sk);
           });
-          addLog("✅ Transaction group signed.", "success");
+          addLog("Transaction group signed.", "success");
           return signed;
         }
       };
@@ -310,7 +309,7 @@ export default function App() {
         const res = await fetch(input, init);
         
         if (res.status === 402) {
-          addLog("📥 Received HTTP 402 Payment Required", "warn");
+          addLog("Received HTTP 402 Payment Required", "warn");
           addLog("Parsing PAYMENT-REQUIRED headers...", "info");
           setCurrentStep(3);
           addLog("Submitting payment for settlement via GoPlausible testnet facilitator...", "info");
@@ -339,7 +338,7 @@ export default function App() {
       setVerdictData(data);
       
       if (response.ok) {
-        addLog("🎉 AgentGuard validation complete!", "success");
+        addLog("AgentGuard validation complete.", "success");
         addLog(`Settlement Transaction: ${data.settlement?.txId || "None"}`, "tx");
       } else {
         addLog(`Server responded with error: ${data.error || JSON.stringify(data)}`, "error");
@@ -418,8 +417,7 @@ export default function App() {
         
         {/* Left Column Text */}
         <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 bg-brand-violet/8 border border-brand-violet/15 px-3 py-1 rounded-full w-fit mx-auto lg:mx-0 shadow-lg shadow-brand-violet/5">
-            <Sparkles className="w-3.5 h-3.5 text-brand-violet" />
+          <div className="inline-flex items-center gap-2 bg-brand-violet/8 border border-brand-violet/15 px-3.5 py-1.5 rounded-full w-fit mx-auto lg:mx-0 shadow-lg shadow-brand-violet/5">
             <span className="text-[10px] font-extrabold text-brand-violet uppercase tracking-widest font-display">Algorand Autonomous Gateway</span>
           </div>
 
@@ -532,7 +530,7 @@ export default function App() {
               <div className="grid grid-cols-2 gap-2 text-[10px] font-mono border-t border-white/5 pt-2.5 text-text-secondary">
                 <div>Price Claimed: <span className="text-white">5.00 USDC</span></div>
                 <div>Registry Status: <span className="text-brand-rose font-bold">UNREGISTERED</span></div>
-                <div className="col-span-2 text-brand-rose font-bold mt-0.5">⚠️ Status: Exposed (Wallet Drained)</div>
+                <div className="col-span-2 text-brand-rose font-bold mt-0.5">Status: Exposed (Wallet Drained)</div>
               </div>
             </div>
           </div>
@@ -560,7 +558,7 @@ export default function App() {
               <div className="grid grid-cols-2 gap-2 text-[10px] font-mono border-t border-white/5 pt-2.5 text-text-secondary">
                 <div>Price Claimed: <span className="text-white">0.01 USDC</span></div>
                 <div>Registry Status: <span className="text-brand-emerald font-bold">VERIFIED SAFE</span></div>
-                <div className="col-span-2 text-brand-emerald font-bold mt-0.5">✅ Status: Blocked/Approved by Rules</div>
+                <div className="col-span-2 text-brand-emerald font-bold mt-0.5">Status: Blocked/Approved by Rules</div>
               </div>
             </div>
           </div>
@@ -719,9 +717,8 @@ export default function App() {
                 <button 
                   onClick={loadDemoWallet}
                   disabled={walletLoading}
-                  className="w-full text-xs font-bold py-2 rounded-xl bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 hover:bg-brand-emerald/25 transition-all uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-brand-emerald/5"
+                  className="w-full text-xs font-bold py-2.5 rounded-xl bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 hover:bg-brand-emerald/25 transition-all uppercase tracking-wider flex items-center justify-center cursor-pointer shadow-lg shadow-brand-emerald/5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
                   Load Funded Demo Wallet (19.90 USDC)
                 </button>
 
@@ -824,7 +821,7 @@ export default function App() {
             <div className="premium-card rounded-2xl p-6 flex flex-col gap-5">
               <div className="flex flex-col gap-1">
                 <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-brand-blue" />
+                  <Server className="w-4 h-4 text-brand-blue" />
                   Target Merchant Query
                 </h3>
                 <p className="text-[10px] text-text-secondary leading-normal mt-1">
@@ -903,7 +900,7 @@ export default function App() {
                 ) : (
                   <>
                     <ShieldCheck className="w-4.5 h-4.5" />
-                    🛡️ Execute Pre-payment Check ($0.01 USDC Fee)
+                    Execute Pre-payment Check ($0.01 USDC Fee)
                   </>
                 )}
               </button>
@@ -1015,7 +1012,6 @@ export default function App() {
                   <div className="flex flex-col gap-2 bg-bg-navy-dark border border-white/5 p-4 rounded-xl">
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-bold text-white flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-brand-emerald" />
                         Reputation Trust Gauge
                       </span>
                       <span className="font-mono font-bold text-brand-emerald">
@@ -1040,14 +1036,14 @@ export default function App() {
                   <div className="bg-brand-emerald/8 border border-brand-emerald/15 p-3.5 rounded-xl flex items-start gap-2.5">
                     <ShieldCheck className="w-4.5 h-4.5 text-brand-emerald shrink-0 mt-0.5" />
                     <p className="text-[11px] text-text-primary leading-normal">
-                      🛡️ <b>Safe to Pay:</b> This merchant endpoint is registered and active on the GoPlausible Bazaar index. All local spend policies passed. AgentGuard recommends permitting the transaction.
+                      <b>Safe to Pay:</b> This merchant endpoint is registered and active on the GoPlausible Bazaar index. All local spend policies passed. AgentGuard recommends permitting the transaction.
                     </p>
                   </div>
                 ) : (
                   <div className="bg-brand-rose/8 border border-brand-rose/15 p-3.5 rounded-xl flex items-start gap-2.5">
                     <AlertTriangle className="w-4.5 h-4.5 text-brand-rose shrink-0 mt-0.5" />
                     <p className="text-[11px] text-text-primary leading-normal">
-                      ⚠️ <b>Blocked / High Risk:</b> The target is unregistered, has zero transaction history, or has violated your spend policy limits. AgentGuard has blocked this payment from signing.
+                      <b>Blocked / High Risk:</b> The target is unregistered, has zero transaction history, or has violated your spend policy limits. AgentGuard has blocked this payment from signing.
                     </p>
                   </div>
                 )}
@@ -1135,7 +1131,7 @@ export default function App() {
                 </p>
                 <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
                   <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-emerald font-bold uppercase">PROCEED ✅</span>
+                  <span className="text-brand-emerald font-bold uppercase">PROCEED</span>
                 </div>
               </div>
 
@@ -1153,7 +1149,7 @@ export default function App() {
                 </p>
                 <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
                   <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-blue font-bold uppercase">PROCEED ✅</span>
+                  <span className="text-brand-blue font-bold uppercase">PROCEED</span>
                 </div>
               </div>
 
@@ -1171,7 +1167,7 @@ export default function App() {
                 </p>
                 <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
                   <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-amber font-bold uppercase">CAUTION ⚠️</span>
+                  <span className="text-brand-amber font-bold uppercase">CAUTION</span>
                 </div>
               </div>
 
@@ -1189,7 +1185,7 @@ export default function App() {
                 </p>
                 <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
                   <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-rose font-bold uppercase">ABORT 🛑</span>
+                  <span className="text-brand-rose font-bold uppercase">ABORT</span>
                 </div>
               </div>
             </div>
