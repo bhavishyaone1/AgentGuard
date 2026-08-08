@@ -674,6 +674,23 @@ export default function App() {
                     </button>
                   </div>
 
+                  {/* Getting Started / Algorand Dispenser Banner */}
+                  <div className="bg-bg-navy-dark/70 border border-white/5 p-3 rounded-xl flex items-center justify-between gap-2 text-[11px]">
+                    <div className="text-text-secondary leading-relaxed">
+                      Need testnet funds? Open the{" "}
+                      <a 
+                        href="https://bank.testnet.algorand.network/" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-brand-blue font-bold hover:underline inline-flex items-center gap-1"
+                      >
+                        Algorand Dispenser
+                        <ExternalLink className="w-3 h-3" />
+                      </a>{" "}
+                      and fund with ALGO & USDC.
+                    </div>
+                  </div>
+
                   {/* Address display */}
                   <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Address</span>
@@ -724,7 +741,7 @@ export default function App() {
                     <button 
                       onClick={loadDemoWallet}
                       disabled={walletLoading}
-                      className="w-full text-xs font-bold py-2.5 rounded-xl bg-brand-emerald/15 text-brand-emerald border border-brand-emerald/30 hover:bg-brand-emerald/25 transition-all uppercase tracking-wider flex items-center justify-center cursor-pointer shadow-lg shadow-brand-emerald/5"
+                      className="w-full text-[11px] font-bold py-1.5 px-3 rounded-lg bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/20 hover:bg-brand-emerald/20 transition-all uppercase tracking-wider flex items-center justify-center cursor-pointer shadow-sm"
                     >
                       Load Funded Demo Wallet (19.90 USDC)
                     </button>
