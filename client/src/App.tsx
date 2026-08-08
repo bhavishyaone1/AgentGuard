@@ -681,13 +681,60 @@ export default function App() {
           className="w-full max-w-7xl mx-auto py-10 relative z-10 border-t border-white/5 scroll-mt-28"
         >
           
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest font-display">Live Interactive Sandbox</span>
             <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Simulate an Autonomous AI Payment</h2>
             <p className="text-text-secondary text-sm mt-3 max-w-lg mx-auto">
               Test the pre-payment spend policy firewall in real-time. Select a merchant preset or test custom targets.
             </p>
           </div>
+
+          {/* Quick Start 3-Step Workflow Banner */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-bg-navy-dark border border-brand-violet/20 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-violet/10 flex items-center justify-center shrink-0 border border-brand-violet/20">
+                <Zap className="w-5 h-5 text-brand-violet" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white uppercase tracking-wider font-display">Wallet & Testing Workflow</span>
+                <span className="text-[11px] text-text-secondary">How the Algorand USDC pre-payment process works:</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto flex-1 max-w-3xl">
+              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
+                <span className="text-[10px] font-bold text-brand-emerald uppercase flex items-center gap-1">
+                  <Wallet className="w-3 h-3" /> Step 1: Fund & Opt-In
+                </span>
+                <span className="text-text-secondary leading-relaxed">
+                  Get testnet <b>ALGO</b> from Dispenser, then click <b>Opt-In to USDC</b> (or click <b className="text-brand-emerald">(Demo)</b> next to Secret Mnemonic for instant keys).
+                </span>
+              </div>
+
+              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
+                <span className="text-[10px] font-bold text-brand-blue uppercase flex items-center gap-1">
+                  <Server className="w-3 h-3" /> Step 2: Choose Target
+                </span>
+                <span className="text-text-secondary leading-relaxed">
+                  Select a live merchant: <b>ALGOMetrics</b> (Trusted), <b>Compx</b> (Caution), or <b>Unknown Scammer</b> (Blocked).
+                </span>
+              </div>
+
+              <div className="bg-white/3 border border-white/5 p-3.5 rounded-xl flex flex-col gap-1 text-[11px]">
+                <span className="text-[10px] font-bold text-brand-cyan uppercase flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Step 3: Run Check
+                </span>
+                <span className="text-text-secondary leading-relaxed">
+                  Click <b>Execute Pre-Payment Check</b> ($0.01 fee) to run the on-chain registry audit and see live reputation score!
+                </span>
+              </div>
+            </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Payer & Rules (5 cols) */}
