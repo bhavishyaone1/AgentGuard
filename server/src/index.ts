@@ -37,6 +37,20 @@ app.use(
   })
 );
 
+// Root discovery route
+app.get("/", (c) => {
+  return c.json({
+    name: "AgentGuard API Gateway",
+    version: "1.0.0",
+    status: "active",
+    network: "algorand-testnet",
+    endpoints: {
+      health: "/api/health",
+      check: "POST /api/check"
+    }
+  });
+});
+
 // Health Check route
 app.get("/api/health", (c) => {
   return c.json({ status: "healthy", service: "AgentGuard", time: new Date().toISOString() });
