@@ -95,6 +95,8 @@ export default function App() {
   // UI interaction states
   const [navbarShrunk, setNavbarShrunk] = useState<boolean>(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [codeTab, setCodeTab] = useState<"ts" | "py">("ts");
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
   
   // Custom cursor position state
   const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
@@ -1006,6 +1008,31 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Animated Reputation Trust Gauge */}
+                {verdictData.trust?.reputationScore !== undefined && (
+                  <div className="flex flex-col gap-2 bg-bg-navy-dark border border-white/5 p-4 rounded-xl">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-brand-emerald" />
+                        Reputation Trust Gauge
+                      </span>
+                      <span className="font-mono font-bold text-brand-emerald">
+                        {verdictData.trust.reputationScore} / 100
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-1000 ${
+                          verdictData.trust.reputationScore >= 80 ? 'bg-gradient-to-r from-brand-emerald to-brand-blue' :
+                          verdictData.trust.reputationScore >= 50 ? 'bg-gradient-to-r from-brand-amber to-brand-rose' :
+                          'bg-brand-rose'
+                        }`}
+                        style={{ width: `${verdictData.trust.reputationScore}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Plain English Verdict Explanation Banner */}
                 {verdictData.trust?.verdict === "trusted" ? (
                   <div className="bg-brand-emerald/8 border border-brand-emerald/15 p-3.5 rounded-xl flex items-start gap-2.5">
@@ -1075,6 +1102,97 @@ export default function App() {
               </div>
             )}
 
+          </div>
+        </div>
+
+        {/* 4b. Interactive Developer Integration Code Snippets */}
+        <div className="mt-12 premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest font-display">Developer Drop-In</span>
+              <h3 className="text-xl font-black text-white font-display mt-1">2-Line AI Agent Integration</h3>
+              <p className="text-xs text-text-secondary mt-1">Wrap your AI agent's fetch client to enforce spend limits & merchant checks automatically.</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Tab selector */}
+              <div className="flex bg-bg-navy-dark border border-white/10 p-1 rounded-xl">
+                <button
+                  onClick={() => setCodeTab("ts")}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                    codeTab === "ts" ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
+                  }`}
+                >
+                  TypeScript (Node)
+                </button>
+                <button
+                  onClick={() => setCodeTab("py")}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                    codeTab === "py" ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
+                  }`}
+                >
+                  Python (AI Agent)
+                </button>
+              </div>
+
+              {/* Copy code button */}
+              <button
+                onClick={() => {
+                  const tsCode = `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// 🚀 All requests are now verified by AgentGuard on-chain before payment!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();`;
+                  const pyCode = `import requests\nfrom x402 import wrap_session\n\n# Wrap your standard requests session with AgentGuard x402 firewall\nsession = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])\n\n# 🚀 Automatic pre-payment trust audit settled on Algorand!\nresponse = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n    "merchantAddress": "api.algometrics.org",\n    "claimedPrice": {"amount": "10000", "asset": "USDC"}\n})\nverdict = response.json()\nprint(f"Safety Decision: {verdict['trust']['recommendation']}")`;
+                  
+                  copyToClipboard(codeTab === "ts" ? tsCode : pyCode, setCopiedCode);
+                }}
+                className="p-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-1.5 text-text-primary cursor-pointer"
+              >
+                {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedCode ? "Copied!" : "Copy Code"}
+              </button>
+            </div>
+          </div>
+
+          {/* Code block display */}
+          <div className="bg-[#050505] border border-white/10 rounded-2xl p-5 font-mono text-xs text-text-primary overflow-x-auto leading-relaxed">
+            {codeTab === "ts" ? (
+              <pre className="text-brand-blue/90">
+{`import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
+import { ExactAvmScheme } from "@x402/avm/exact/client";
+import { toClientAvmSigner } from "@x402/avm";
+
+// 1. Recover your agent's private key
+const signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);
+const config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };
+
+// 2. Wrap native fetch with x402 pre-payment security gate
+const auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);
+
+// 🚀 Request is automatically audited on Algorand Testnet before funds release!
+const res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {
+  method: "POST",
+  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })
+});
+const verdict = await res.json();
+console.log(verdict.trust.verdict); // "trusted"`}
+              </pre>
+            ) : (
+              <pre className="text-brand-emerald/90">
+{`import requests
+from x402 import wrap_session
+
+# 1. Wrap standard python requests session with AgentGuard x402 firewall
+session = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])
+
+# 🚀 Automated pre-payment trust audit settled on Algorand Testnet!
+response = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={
+    "merchantAddress": "api.algometrics.org",
+    "claimedPrice": {"amount": "10000", "asset": "USDC"}
+})
+
+verdict = response.json()
+if verdict["trust"]["recommendation"] == "proceed":
+    print("Safe to pay merchant! Releasing primary payment...")`}
+              </pre>
+            )}
           </div>
         </div>
       </section>
