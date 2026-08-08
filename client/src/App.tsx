@@ -15,7 +15,10 @@ import {
   Server,
   Layers,
   ChevronDown,
-  ArrowRight
+  ArrowRight,
+  Lock,
+  Zap,
+  Globe
 } from "lucide-react";
 import algosdk from "algosdk";
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
@@ -37,21 +40,24 @@ const DEMO_MERCHANTS = [
     tag: "Trusted Live Vendor", 
     desc: "Active market data API with 90+ verified settlements.",
     address: "api.algometrics.org",
-    status: "trusted"
+    status: "trusted",
+    defaultPrice: "10000"
   },
   { 
     name: "Compx Amarok API", 
     tag: "Verified On-Chain", 
     desc: "Active Algorand merchant with 18,800+ on-chain verifications.",
     address: "XJCCGGJ6FL6CFYNXCTO6Q5YQ7E2OIYVRX2G3BVZUF4JOL36HSJRPLYHW5E",
-    status: "trusted"
+    status: "verified",
+    defaultPrice: "10000"
   },
   { 
     name: "Unknown Scammer Mock", 
     tag: "High-Risk Mock", 
     desc: "Fake address with 0 history. Tests firewall blocking.",
     address: "7Y4TGDJSHS5J4LHGKSLK5HJSKL44JLJDFSLDJKDFSD45FDGDFGDFGDG2",
-    status: "high_risk"
+    status: "high_risk",
+    defaultPrice: "10000"
   }
 ];
 
@@ -64,6 +70,7 @@ export default function App() {
   const [isOptedIn, setIsOptedIn] = useState<boolean>(false);
   const [walletLoading, setWalletLoading] = useState<boolean>(false);
   const [copiedMnemonic, setCopiedMnemonic] = useState<boolean>(false);
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
 
   // Form State
   const [targetMerchant, setTargetMerchant] = useState<string>("api.algometrics.org");
@@ -77,27 +84,14 @@ export default function App() {
   // Log / Flow State
   const [logs, setLogs] = useState<Array<{ time: string; msg: string; type: "info" | "success" | "warn" | "error" | "tx" }>>([]);
   const [checking, setChecking] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<number>(0); // 0: idle, 1: 402 chall, 2: signing, 3: settling, 4: resolved
+  const [currentStep, setCurrentStep] = useState<number>(0);
   const [verdictData, setVerdictData] = useState<any>(null);
-
-  const getStepHelperText = () => {
-    switch (currentStep) {
-      case 0: return "Ready to start. Choose a merchant preset in the sandbox below and click 'Execute Check' to launch the flow.";
-      case 1: return "Phase 1: Calling checking API. Server rejects with HTTP 402 Payment Required and returns payment requirements.";
-      case 2: return "Phase 2: x402 fetch wrapper intercepts 402. Recovering Payer wallet secret key and signing the USDC transaction group...";
-      case 3: return "Phase 3: Submitting signed transaction group to Algorand Testnet. Waiting for block confirmation (~3.3s finality)...";
-      case 4: return "Phase 4: Payment confirmed! Hono server queries GoPlausible registry, runs spend rules, and returns final verdict.";
-      default: return "";
-    }
-  };
 
   // UI interaction states
   const [navbarShrunk, setNavbarShrunk] = useState<boolean>(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [codeTab, setCodeTab] = useState<"ts" | "py" | "langchain" | "crewai">("ts");
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
-  
-  // Custom cursor position state
   const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
 
   // Scroll tracking to shrink navbar
@@ -118,32 +112,14 @@ export default function App() {
     return () => window.removeEventListener("pointermove", handlePointerMove);
   }, []);
 
-  // Scroll reveal Intersection Observer (Staggered fade-in reveal)
+  // Initialize or load wallet on mount
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("revealed");
-          }
-        });
-      },
-      { threshold: 0.05, rootMargin: "0px 0px -40px 0px" }
-    );
-    const elements = document.querySelectorAll(".reveal-section");
-    elements.forEach((el) => observer.observe(el));
-    return () => {
-      elements.forEach((el) => observer.unobserve(el));
-    };
-  }, []);
-
-  // Load wallet on mount
-  useEffect(() => {
-    const savedMnemonic = localStorage.getItem("agentguard_payer_mnemonic");
-    if (savedMnemonic) {
-      recoverWallet(savedMnemonic);
+    const saved = localStorage.getItem("agentguard_payer_mnemonic");
+    if (saved) {
+      recoverWallet(saved);
     } else {
-      generateNewWallet();
+      const DEMO_MNEMONIC = "sun sign term dash tube control method lumber elephant cause illegal arch pioneer soccer juice search isolate chimney thunder course liquid alarm element able catalog";
+      recoverWallet(DEMO_MNEMONIC);
     }
   }, []);
 
@@ -231,30 +207,23 @@ export default function App() {
       const { txId } = await algodClient.sendRawTransaction(signedTxn).do();
       addLog(`Opt-in tx submitted. Tx ID: ${txId}`, "tx");
       
+      addLog("Waiting for confirmation on Algorand testnet...", "info");
       await algosdk.waitForConfirmation(algodClient, txId, 4);
-      addLog("USDC Opt-in confirmed successfully!", "success");
+      addLog("Opt-in transaction confirmed! Account ready for USDC.", "success");
+      
       await fetchBalances(account.addr);
-    } catch (e: any) {
-      addLog(`USDC Opt-in failed: ${e.message || e}`, "error");
+    } catch (err: any) {
+      addLog(`Opt-in failed: ${err.message || err}`, "error");
     } finally {
       setWalletLoading(false);
     }
   };
 
   const copyToClipboard = (text: string, setCopied: (v: boolean) => void) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Mouse Spotlight Movement Handler
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty("--mouse-x", `${x}px`);
-    card.style.setProperty("--mouse-y", `${y}px`);
   };
 
   const handlePrePaymentCheck = async () => {
@@ -354,23 +323,34 @@ export default function App() {
   };
 
   const faqs = [
-    { q: "What is the x402 Protocol?", a: "The x402 Protocol is a decentralized standard that enables machine-to-machine micropayments. It triggers an HTTP 402 Payment Required status code, requesting the client agent to pay-per-call on-chain before receiving resource outputs." },
-    { q: "How does the Pre-Payment Trust check work?", a: "Before the agent signs and transfers USDC, AgentGuard intercepts the call, queries the GoPlausible Bazaar discover registries, audits the merchant credentials, verifies transaction history, and compares it against caller spend policies." },
-    { q: "Who sponsors the transaction fees?", a: "AgentGuard uses Algorand's atomic transaction groups to structure a gasless transfer. The GoPlausible facilitator sponsors the native ALGO network fees, meaning paying agents only require USDC." },
-    { q: "How do I integrate this in my AI agent script?", a: "You simply wrap the native fetch client using the @x402/fetch SDK wrapper and pass your AVM signer. The SDK handles 402 challenge intercepts and key signatures automatically." }
+    { 
+      q: "What is AgentGuard?", 
+      a: "AgentGuard is an on-chain pre-payment security firewall for autonomous AI agents. Before an agent sends payments to an API vendor, AgentGuard intercepts the request, audits the merchant on the GoPlausible Bazaar registry, evaluates local spend rules, and blocks fraud or overcharging." 
+    },
+    { 
+      q: "Why does an unknown address score 15/100?", 
+      a: "If a target address is not registered on the GoPlausible Bazaar index, has zero on-chain settlement record, or belongs to another network (like Ethereum/EVM), AgentGuard flags it as High Risk (15/100) and recommends ABORT to prevent wallet drainage." 
+    },
+    { 
+      q: "How does the x402 Micropayment Standard work?", 
+      a: "The server returns an HTTP 402 Payment Required response containing payment parameters. The client-side @x402/fetch SDK intercepts the 402, signs the Algorand transaction group, settles the $0.01 USDC check fee via the facilitator, and retries automatically." 
+    },
+    { 
+      q: "Who pays for the blockchain network fees?", 
+      a: "AgentGuard uses Algorand's atomic transaction groups to structure a gasless transfer. The GoPlausible facilitator sponsors the native ALGO network fees, meaning paying agents only require USDC." 
+    },
+    { 
+      q: "How do I integrate AgentGuard into LangChain or CrewAI?", 
+      a: "Wrap your agent's API tool with the AgentGuard security gate. Check the 'Developer SDK' section below for copy-paste code snippets for LangChain, CrewAI, Python, and TypeScript." 
+    }
   ];
 
   return (
-    <div className="min-h-screen text-text-primary flex flex-col relative overflow-hidden bg-bg-navy selection:bg-brand-violet selection:text-white">
+    <div className="min-h-screen text-text-primary flex flex-col relative overflow-hidden bg-[#050505] selection:bg-brand-violet selection:text-white">
       
       {/* Background Aurora & Grid Pattern */}
       <div className="aurora-bg"></div>
       <div className="grid-overlay"></div>
-
-      {/* Floating Lights Decoration */}
-      <div className="absolute top-[15%] left-[5%] w-[400px] h-[400px] bg-brand-violet/5 rounded-full blur-[100px] pointer-events-none aurora-blob-1"></div>
-      <div className="absolute top-[45%] right-[10%] w-[350px] h-[350px] bg-brand-blue/5 rounded-full blur-[120px] pointer-events-none aurora-blob-2"></div>
-      <div className="absolute bottom-[10%] left-[20%] w-[450px] h-[450px] bg-brand-magenta/4 rounded-full blur-[140px] pointer-events-none"></div>
 
       {/* Ambient Custom Cursor Glow */}
       <div 
@@ -381,23 +361,31 @@ export default function App() {
       {/* Floating Glass Navbar */}
       <header className={`fixed top-4 left-1/2 -translate-x-1/2 w-[94%] max-w-6xl rounded-full z-50 transition-all duration-300 ${
         navbarShrunk 
-          ? "bg-bg-navy-light/80 border-white/10 shadow-2xl py-3 px-6 backdrop-blur-xl" 
-          : "bg-bg-navy/40 border-white/5 py-4 px-8 backdrop-blur-md"
-      } border flex justify-between items-center shadow-lg shadow-black/40`}>
+          ? "bg-[#0D0D0D]/90 border-white/10 shadow-2xl py-3 px-6 backdrop-blur-xl" 
+          : "bg-[#050505]/50 border-white/5 py-4 px-8 backdrop-blur-md"
+      } border flex justify-between items-center shadow-lg shadow-black/50`}>
         <div className="flex items-center gap-3">
           <span className="font-extrabold text-sm tracking-tight font-display text-white">
             AgentGuard
           </span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1">
-          {["Platform", "Solution", "Sandbox", "Features", "Architecture", "FAQ"].map((sect) => (
+        <nav className="hidden md:flex items-center gap-1 bg-white/[0.02] border border-white/5 p-1 rounded-full">
+          {[
+            { id: "platform", label: "Platform" },
+            { id: "solution", label: "Vulnerability" },
+            { id: "architecture", label: "Architecture" },
+            { id: "sandbox", label: "Sandbox" },
+            { id: "scoring", label: "Scoring" },
+            { id: "sdk", label: "SDK" },
+            { id: "faq", label: "FAQ" }
+          ].map((sect) => (
             <a 
-              key={sect}
-              href={`#${sect.toLowerCase()}`}
+              key={sect.id}
+              href={`#${sect.id}`}
               className="text-xs font-semibold text-text-secondary hover:text-white px-3.5 py-1.5 rounded-full transition-all hover:bg-white/5 cursor-pointer"
             >
-              {sect}
+              {sect.label}
             </a>
           ))}
         </nav>
@@ -433,13 +421,13 @@ export default function App() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mt-2">
             <a 
               href="#sandbox" 
-              className="w-full sm:w-auto text-xs font-extrabold bg-gradient-to-r from-brand-violet via-brand-blue to-brand-cyan text-white px-7 py-4 rounded-full glow-btn-primary uppercase tracking-wider font-display text-center"
+              className="w-full sm:w-auto text-xs font-extrabold bg-gradient-to-r from-brand-violet via-brand-blue to-brand-cyan text-white px-7 py-4 rounded-full glow-btn-primary uppercase tracking-wider font-display text-center cursor-pointer"
             >
               Enter Sandbox →
             </a>
             <a 
               href="#solution" 
-              className="w-full sm:w-auto text-xs font-extrabold border border-white/10 hover:border-white/18 text-text-primary px-7 py-4 rounded-full transition-all uppercase tracking-wider bg-white/3 text-center"
+              className="w-full sm:w-auto text-xs font-extrabold border border-white/10 hover:border-white/20 text-text-primary px-7 py-4 rounded-full transition-all uppercase tracking-wider bg-white/3 text-center cursor-pointer"
             >
               Read Protocol Flow
             </a>
@@ -504,7 +492,7 @@ export default function App() {
       </section>
 
       {/* 2. Problem & Solution Section */}
-      <section id="solution" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
+      <section id="solution" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
           {/* Left panel: Problem definition */}
@@ -537,23 +525,23 @@ export default function App() {
 
           {/* Right panel: Solution definition */}
           <div className="flex flex-col gap-6">
-            <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">The Security Shield</span>
+            <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">The AgentGuard Solution</span>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight font-display">
-              Pre-Payment Trust <br />
-              Firewall.
+              On-Chain Spend Policy <br />
+              & Registry Gateway.
             </h2>
             <p className="text-text-secondary text-sm leading-relaxed max-w-md">
-              AgentGuard sits as a proxy barrier. The agent sends the call, and for $0.01 USDC, AgentGuard performs a structural audit of the receiver's discovery registry details and filters it against your spend policies *before* signing occurs.
+              AgentGuard proxies the x402 payment lifecycle on the Algorand blockchain. Our decentralized verification checks the target endpoint against GoPlausible Bazaar registry data and enforces local spend limits before funds transfer.
             </p>
 
-            {/* Visual Shield mockup */}
+            {/* Visual Guard mockup */}
             <div className="bg-bg-navy-dark/40 border border-brand-emerald/15 p-4.5 rounded-xl flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-brand-emerald font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  AgentGuard Gate
+                  AgentGuard Protected
                 </span>
-                <span className="text-[9px] font-mono text-text-faint">Audited Proxy Firewall</span>
+                <span className="text-[9px] font-mono text-text-faint">Verified Micropayment</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[10px] font-mono border-t border-white/5 pt-2.5 text-text-secondary">
                 <div>Price Claimed: <span className="text-white">0.01 USDC</span></div>
@@ -566,9 +554,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* 3. Interactive Architecture Flow */}
-      <section id="architecture" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
-        <div className="text-center mb-12">
+      {/* 3. Interactive Protocol Architecture */}
+      <section id="architecture" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
+        <div className="text-center mb-16">
           <span className="text-[10px] font-bold text-brand-violet uppercase tracking-widest font-display">System Integrity</span>
           <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Interactive Protocol Architecture</h2>
           <p className="text-text-secondary text-sm mt-3 max-w-lg mx-auto">
@@ -577,19 +565,10 @@ export default function App() {
         </div>
 
         {/* Visual pipeline */}
-        <div className="premium-card rounded-3xl p-8 overflow-x-auto">
+        <div className="overflow-x-auto py-6">
           <div className="min-w-[850px] flex items-center justify-between relative py-6">
-            
-            {/* Visual connector lines */}
             <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/5 -translate-y-1/2 z-0"></div>
-            <div className={`absolute top-1/2 left-0 h-[2px] bg-gradient-to-r from-brand-violet via-brand-blue to-brand-emerald -translate-y-1/2 z-0 transition-all duration-1000 ${
-              currentStep === 0 ? 'w-0' :
-              currentStep === 1 ? 'w-1/4' :
-              currentStep === 2 ? 'w-2/4' :
-              currentStep === 3 ? 'w-3/4' : 'w-full'
-            }`}></div>
             
-            {/* Steps */}
             {[
               { label: "Payer Wallet", desc: "USDC & Mnemonic setup", activeStep: 0, icon: Wallet },
               { label: "402 Challenge", desc: "API returns Payment Required", activeStep: 1, icon: AlertTriangle },
@@ -600,53 +579,46 @@ export default function App() {
               const IconComp = node.icon;
               const isPassed = currentStep >= node.activeStep;
               const isActive = currentStep === node.activeStep;
-
               return (
-                <div key={index} className="flex flex-col items-center gap-3.5 z-10 relative bg-[#0D0D0D] px-4">
+                <div key={index} className="flex flex-col items-center gap-3.5 z-10 relative bg-[#050505] px-4">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 shadow-xl ${
-                    isActive ? 'bg-brand-violet/20 border-brand-violet scale-110 shadow-brand-violet/10' :
-                    isPassed ? 'bg-brand-emerald/10 border-brand-emerald text-brand-emerald' :
-                    'bg-bg-navy-dark border-white/5 text-text-faint'
+                    isActive ? 'bg-brand-violet/20 border-brand-violet text-brand-violet scale-110 shadow-brand-violet/20' :
+                    isPassed ? 'bg-brand-emerald/15 border-brand-emerald text-brand-emerald' :
+                    'bg-white/5 border-white/10 text-text-secondary'
                   }`}>
                     <IconComp className="w-6 h-6" />
                   </div>
-                  <div className="text-center flex flex-col gap-1 max-w-[150px]">
-                    <span className={`text-xs font-bold transition-colors ${isPassed ? 'text-white' : 'text-text-faint'}`}>{node.label}</span>
-                    <span className="text-[9px] text-text-secondary leading-normal">{node.desc}</span>
+                  <div className="text-center flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-white font-display">{node.label}</span>
+                    <span className="text-[10px] text-text-secondary max-w-[120px]">{node.desc}</span>
                   </div>
                 </div>
               );
             })}
-
-          </div>
-          
-          {/* Dynamic step explanations */}
-          <div className="mt-6 bg-white/[0.02] border border-white/5 p-4.5 rounded-2xl flex items-center justify-center text-center">
-            <p className="text-xs font-mono text-brand-violet font-semibold transition-all duration-300">{getStepHelperText()}</p>
           </div>
         </div>
       </section>
 
-      {/* 4. Interactive Sandbox Sandbox (Live Sandbox Demo) */}
-      <section id="sandbox" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
+      {/* 4. Live Security Sandbox Console */}
+      <section id="sandbox" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
         
-        <div className="text-center mb-14">
-          <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest font-display">Interactive Playground</span>
-          <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Live Verification Sandbox</h2>
+        {/* Sandbox Header */}
+        <div className="text-center mb-16">
+          <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest font-display">Live Interactive Sandbox</span>
+          <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Simulate an Autonomous AI Payment</h2>
           <p className="text-text-secondary text-sm mt-3 max-w-lg mx-auto">
-            Review the wallet setup, configure the policy threshold gates, and execute a paid pre-payment audit on the testnet.
+            Test the pre-payment spend policy firewall in real-time. Select a merchant preset or test custom targets.
           </p>
         </div>
 
+        {/* 2-Column Console Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left panel config column (5 cols) */}
+          {/* Left Column: Payer & Rules (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             
-            {/* Wallet Panel */}
+            {/* Payer Wallet Card */}
             <div className="premium-card rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-brand-emerald/5 rounded-full blur-2xl pointer-events-none"></div>
-
               <div className="flex justify-between items-center">
                 <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-brand-emerald" />
@@ -655,17 +627,12 @@ export default function App() {
                 <button 
                   onClick={() => fetchBalances(payerAddress)}
                   disabled={walletLoading}
-                  className="p-1.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-all"
+                  className="p-1.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-all cursor-pointer"
                   title="Refresh Balance"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${walletLoading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
-
-              {/* Developer UX Faucet Guide */}
-              <p className="text-[11px] text-text-secondary leading-normal bg-white/[0.01] border border-white/5 p-3 rounded-xl">
-                💡 <b>Getting Started:</b> Copy the address below, open the <a href="https://bank.testnet.algorand.network/" target="_blank" rel="noreferrer" className="text-brand-blue hover:underline font-bold">Algorand Dispenser</a>, and fund it with both <b>ALGO</b> and <b>USDC</b> (via the USDC option at the bottom).
-              </p>
 
               {/* Address display */}
               <div className="bg-bg-navy-dark border border-white/5 p-4 rounded-xl flex flex-col gap-1.5">
@@ -675,10 +642,10 @@ export default function App() {
                     {payerAddress || "Generating..."}
                   </span>
                   <button 
-                    onClick={() => copyToClipboard(payerAddress, setCopiedMnemonic)}
-                    className="p-1 text-text-secondary hover:text-white rounded transition-colors"
+                    onClick={() => copyToClipboard(payerAddress, setCopiedAddress)}
+                    className="p-1 text-text-secondary hover:text-white rounded transition-colors cursor-pointer"
                   >
-                    {copiedMnemonic ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedAddress ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -689,13 +656,13 @@ export default function App() {
                   <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">ALGO Balance</span>
                   <span className="text-lg font-black text-white mt-1 block font-mono">{algoBalance.toFixed(3)}</span>
                 </div>
-                <div className="bg-bg-navy-dark border border-white/5 p-3.5 rounded-xl text-center relative overflow-hidden">
+                <div className="bg-bg-navy-dark border border-white/5 p-3.5 rounded-xl text-center">
                   <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider block">USDC Balance</span>
                   <span className="text-lg font-black text-brand-blue mt-1 block font-mono">{usdcBalance.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* USDC Opt-in Status */}
+              {/* USDC Opt-in Status & Actions */}
               <div className="flex flex-col gap-2.5">
                 {!isOptedIn ? (
                   <div className="bg-brand-rose/5 border border-brand-rose/15 p-3.5 rounded-xl flex items-start gap-3">
@@ -726,14 +693,14 @@ export default function App() {
                   <button 
                     onClick={executeOptIn}
                     disabled={walletLoading || isOptedIn}
-                    className="flex-1 text-xs font-bold py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 transition-colors uppercase tracking-wider"
+                    className="flex-1 text-xs font-bold py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 transition-colors uppercase tracking-wider cursor-pointer"
                   >
                     Opt-in to USDC
                   </button>
                   <button 
                     onClick={generateNewWallet}
                     disabled={walletLoading}
-                    className="text-xs font-bold py-2.5 px-4 rounded-xl border border-white/10 hover:bg-white/5 transition-colors uppercase tracking-wider"
+                    className="text-xs font-bold py-2.5 px-4 rounded-xl border border-white/10 hover:bg-white/5 transition-colors uppercase tracking-wider cursor-pointer"
                   >
                     Generate
                   </button>
@@ -741,8 +708,8 @@ export default function App() {
               </div>
 
               {/* Mnemonic Copy */}
-              <div className="border-t border-white/5 pt-3.5 flex justify-between items-center text-xs">
-                <span className="font-semibold text-text-secondary">Secret Mnemonic</span>
+              <div className="border-t border-white/5 pt-3 flex justify-between items-center text-xs">
+                <span className="font-semibold text-text-secondary text-[11px]">Secret Mnemonic</span>
                 <button 
                   onClick={() => copyToClipboard(payerMnemonic, setCopiedMnemonic)}
                   className="text-[10px] font-bold text-brand-violet hover:underline flex items-center gap-1.5 cursor-pointer"
@@ -750,22 +717,20 @@ export default function App() {
                   {copiedMnemonic ? (
                     <>
                       <Check className="w-3 h-3 text-brand-emerald" />
-                      Copied Secret Words
+                      Copied!
                     </>
                   ) : (
                     <>
                       <Copy className="w-3 h-3" />
-                      Copy Mnemonic
+                      Copy Words
                     </>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Policy Panel */}
+            {/* Spend Policy Panel */}
             <div className="premium-card rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-brand-violet/5 rounded-full blur-2xl pointer-events-none"></div>
-
               <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-brand-violet" />
                 Spend Policy Rules
@@ -779,23 +744,23 @@ export default function App() {
                 </div>
                 <input 
                   type="range" 
-                  min="1000" 
+                  min="5000" 
                   max="100000" 
-                  step="1000" 
+                  step="5000" 
                   value={maxPerCall}
                   onChange={(e) => setMaxPerCall(e.target.value)}
                   className="w-full accent-brand-violet bg-white/10 h-1 rounded-lg appearance-none cursor-pointer"
                 />
                 <span className="text-[10px] text-text-secondary leading-normal">
-                  Fails checks automatically if claimed price exceeds this threshold.
+                  Fails check automatically if claimed price exceeds this threshold.
                 </span>
               </div>
 
-              {/* Daily remaining */}
+              {/* Daily limit */}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-white">Daily remaining Limit</span>
-                  <span className="font-mono text-brand-violet font-semibold">{(Number(maxDailyRemaining) / 1000000).toFixed(2)} USDC</span>
+                  <span className="font-bold text-white">Daily Remaining Limit</span>
+                  <span className="font-mono text-brand-violet font-semibold">{(Number(maxDailyRemaining) / 1000000).toFixed(4)} USDC</span>
                 </div>
                 <input 
                   type="range" 
@@ -814,7 +779,7 @@ export default function App() {
 
           </div>
 
-          {/* Right Column: Console sandbox and targets (7 cols) */}
+          {/* Right Column: Console Sandbox & Targets (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             
             {/* Target Settings Card */}
@@ -829,18 +794,14 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Merchant presets grid */}
+              {/* Merchant Presets Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {DEMO_MERCHANTS.map((m) => (
                   <button 
                     key={m.name}
                     onClick={() => {
                       setTargetMerchant(m.address);
-                      if (m.status === "trusted") {
-                        setClaimedPriceAmt("10000"); // 0.01 USDC
-                      } else {
-                        setClaimedPriceAmt("15000"); // 0.015 USDC
-                      }
+                      setClaimedPriceAmt(m.defaultPrice);
                     }}
                     className={`p-3.5 text-left rounded-xl border transition-all text-xs flex flex-col gap-2 cursor-pointer ${
                       targetMerchant === m.address 
@@ -862,7 +823,7 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Input targets */}
+              {/* Inputs */}
               <div className="flex flex-col md:flex-row gap-4 items-center">
                 <div className="w-full flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Merchant Host or Wallet</label>
@@ -877,25 +838,25 @@ export default function App() {
                 <div className="w-full md:w-56 flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Claimed Price (USDC Base)</label>
                   <input 
-                    type="text" 
+                    type="number" 
                     value={claimedPriceAmt}
                     onChange={(e) => setClaimedPriceAmt(e.target.value)}
-                    placeholder="Claimed amount"
+                    placeholder="10000"
                     className="bg-bg-navy-dark border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-blue font-mono"
                   />
                 </div>
               </div>
 
-
+              {/* Submit Button */}
               <button 
                 onClick={handlePrePaymentCheck}
-                disabled={checking || !payerAddress || walletLoading}
-                className="w-full font-extrabold bg-gradient-to-r from-brand-violet to-brand-blue hover:scale-[1.01] transition-transform text-white py-3.5 rounded-xl flex items-center justify-center gap-2.5 glow-btn-primary disabled:opacity-50 disabled:pointer-events-none uppercase tracking-wider text-xs"
+                disabled={checking}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-brand-violet via-brand-blue to-brand-cyan text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-brand-violet/20 font-display"
               >
                 {checking ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Executing Paid Validation...
+                    Executing Pre-payment Check...
                   </>
                 ) : (
                   <>
@@ -906,19 +867,17 @@ export default function App() {
               </button>
             </div>
 
-            {/* Live Terminal Logger */}
-            <div className="premium-card rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden">
+            {/* Live Terminal Log */}
+            <div className="premium-card rounded-2xl p-6 flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
-                  <TerminalIcon className="w-4 h-4 text-brand-violet" />
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                  <TerminalIcon className="w-4 h-4 text-brand-cyan" />
                   Live Agent Terminal Log
-                </h3>
-                <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider bg-white/5 border border-white/5 py-1 px-2.5 rounded-full">
-                  Interactive Sandbox
                 </span>
+                <span className="text-[9px] font-mono text-text-faint">Interactive Sandbox</span>
               </div>
 
-              <div className="w-full h-52 bg-bg-navy-dark border border-white/10 rounded-xl p-4 font-mono text-[11px] overflow-y-auto flex flex-col gap-2 shadow-inner">
+              <div className="w-full h-44 bg-bg-navy-dark border border-white/10 rounded-xl p-4 font-mono text-[11px] overflow-y-auto flex flex-col gap-2 shadow-inner">
                 {logs.length === 0 ? (
                   <span className="text-text-faint italic">Agent is idle. Press "Execute Check" to record activities...</span>
                 ) : (
@@ -945,11 +904,6 @@ export default function App() {
               <div className={`premium-card rounded-2xl p-6 border-l-4 transition-all duration-300 relative overflow-hidden flex flex-col gap-5 ${
                 verdictData.trust?.verdict === "trusted" ? 'border-l-brand-emerald' : 'border-l-brand-rose'
               }`}>
-                {/* Background glow highlights */}
-                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10 pointer-events-none ${
-                  verdictData.trust?.verdict === "trusted" ? 'bg-brand-emerald' : 'bg-brand-rose'
-                }`}></div>
-
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -978,35 +932,6 @@ export default function App() {
                   </span>
                 </div>
 
-                {/* Mini-badges bar */}
-                {verdictData.trust?.reputationScore !== undefined && (
-                  <div className="flex flex-wrap gap-2.5 border-t border-b border-white/5 py-3">
-                    <div className="bg-white/3 border border-white/5 px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5">
-                      <span className="text-text-secondary font-medium">Reputation:</span>
-                      <span className={`font-mono font-bold ${
-                        verdictData.trust.reputationScore >= 80 ? 'text-brand-emerald' :
-                        verdictData.trust.reputationScore >= 50 ? 'text-brand-amber' : 'text-brand-rose'
-                      }`}>{verdictData.trust.reputationScore}/100</span>
-                    </div>
-
-                    <div className="bg-white/3 border border-white/5 px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5">
-                      <span className="text-text-secondary font-medium">Risk Level:</span>
-                      <span className={`font-mono font-bold uppercase ${
-                        verdictData.trust.riskLevel === 'low' ? 'text-brand-emerald' :
-                        verdictData.trust.riskLevel === 'medium' ? 'text-brand-amber' : 'text-brand-rose'
-                      }`}>{verdictData.trust.riskLevel}</span>
-                    </div>
-
-                    <div className="bg-white/3 border border-white/5 px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5">
-                      <span className="text-text-secondary font-medium">Recommendation:</span>
-                      <span className={`font-mono font-bold uppercase ${
-                        verdictData.trust.recommendation === 'proceed' ? 'text-brand-emerald' :
-                        verdictData.trust.recommendation === 'proceed_with_caution' ? 'text-brand-amber' : 'text-brand-rose'
-                      }`}>{verdictData.trust.recommendation.replace(/_/g, ' ')}</span>
-                    </div>
-                  </div>
-                )}
-
                 {/* Animated Reputation Trust Gauge */}
                 {verdictData.trust?.reputationScore !== undefined && (
                   <div className="flex flex-col gap-2 bg-bg-navy-dark border border-white/5 p-4 rounded-xl">
@@ -1031,7 +956,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Plain English Verdict Explanation Banner */}
+                {/* Safety Recommendation Banner */}
                 {verdictData.trust?.verdict === "trusted" ? (
                   <div className="bg-brand-emerald/8 border border-brand-emerald/15 p-3.5 rounded-xl flex items-start gap-2.5">
                     <ShieldCheck className="w-4.5 h-4.5 text-brand-emerald shrink-0 mt-0.5" />
@@ -1049,16 +974,14 @@ export default function App() {
                 )}
 
                 {/* Verdict Info / Reasons Grid */}
-                <div className="bg-bg-navy-dark border border-white/5 rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-bg-navy-dark border border-white/5 rounded-xl p-4 flex flex-col gap-2.5">
                   <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Registry Verification Logic</span>
-                  <div className="flex flex-col gap-2.5">
-                    {verdictData.trust?.reasons?.map((reason: string, idx: number) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-text-primary leading-normal">
-                        <ArrowRight className="w-3.5 h-3.5 text-brand-violet shrink-0 mt-0.5" />
-                        <span>{reason}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {verdictData.trust?.reasons?.map((reason: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-text-primary leading-normal">
+                      <ArrowRight className="w-3.5 h-3.5 text-brand-violet shrink-0 mt-0.5" />
+                      <span>{reason}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Spend policy check and receipt */}
@@ -1102,171 +1025,166 @@ export default function App() {
 
           </div>
         </div>
+      </section>
 
-        {/* 4b. Interactive Scoring Engine Architecture & Multi-Framework Developer Drop-In */}
-        <div className="mt-16 flex flex-col gap-10">
+      {/* 5. Algorithmic Scoring Matrix & Multi-Framework SDK */}
+      <section id="scoring" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
+        
+        {/* Header */}
+        <div className="text-center mb-16">
+          <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">Reputation & Integration</span>
+          <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">How AgentGuard Scores & Integrates</h2>
+          <p className="text-text-secondary text-sm mt-3 max-w-xl mx-auto">
+            Deterministic on-chain risk scoring and 2-line SDK integration for autonomous AI agents.
+          </p>
+        </div>
+
+        {/* 4 Score Tiers Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
           
-          {/* Scoring Engine Breakdown Grid */}
-          <div className="premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
-            <div className="flex flex-col gap-2 mb-8 text-center md:text-left">
-              <span className="text-[10px] font-bold text-brand-emerald uppercase tracking-widest font-display">Algorithmic Scoring Matrix</span>
-              <h3 className="text-2xl font-black text-white font-display">How AgentGuard Calculates Trust (0–100)</h3>
-              <p className="text-xs text-text-secondary max-w-2xl">
-                Scores are calculated deterministically on-chain based on Bazaar registry discovery, historical settlement volume, and catalog price schemas.
-              </p>
+          {/* 100 Tier */}
+          <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-white">Verified Elite</span>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-emerald/15 text-brand-emerald font-mono">100 / 100</span>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* 100 Tier */}
-              <div className="bg-bg-navy-dark border border-brand-emerald/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white">Verified Elite</span>
-                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-emerald/15 text-brand-emerald font-mono">100 / 100</span>
-                </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-emerald w-full rounded-full"></div>
-                </div>
-                <p className="text-[10.5px] text-text-secondary leading-relaxed">
-                  Registered in Bazaar + active settlements + claimed price <b>matches declared catalog schema</b>.
-                </p>
-                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
-                  <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-emerald font-bold uppercase">PROCEED</span>
-                </div>
-              </div>
-
-              {/* 85 Tier */}
-              <div className="bg-bg-navy-dark border border-brand-blue/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white">Trusted Vendor</span>
-                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-blue/15 text-brand-blue font-mono">85 / 100</span>
-                </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-blue w-[85%] rounded-full"></div>
-                </div>
-                <p className="text-[10.5px] text-text-secondary leading-relaxed">
-                  Registered in Bazaar with <b>proven settlement history</b> (e.g. 90+ verified settles on Algorand).
-                </p>
-                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
-                  <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-blue font-bold uppercase">PROCEED</span>
-                </div>
-              </div>
-
-              {/* 50 Tier */}
-              <div className="bg-bg-navy-dark border border-brand-amber/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white">Unverified New</span>
-                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-amber/15 text-brand-amber font-mono">50 / 100</span>
-                </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-amber w-1/2 rounded-full"></div>
-                </div>
-                <p className="text-[10.5px] text-text-secondary leading-relaxed">
-                  Registered public key in index, but has <b>0 historical transactions</b> (brand-new provider).
-                </p>
-                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
-                  <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-amber font-bold uppercase">CAUTION</span>
-                </div>
-              </div>
-
-              {/* 15 Tier */}
-              <div className="bg-bg-navy-dark border border-brand-rose/20 p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white">High Risk / Scam</span>
-                  <span className="text-xs font-black px-2 py-0.5 rounded bg-brand-rose/15 text-brand-rose font-mono">15 / 100</span>
-                </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-rose w-[15%] rounded-full"></div>
-                </div>
-                <p className="text-[10.5px] text-text-secondary leading-relaxed">
-                  <b>Unregistered target</b> or foreign-chain address with 0 record. Firewall blocks payment to save funds.
-                </p>
-                <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
-                  <span className="text-text-faint">ACTION:</span>
-                  <span className="text-brand-rose font-bold uppercase">ABORT</span>
-                </div>
-              </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-emerald w-full rounded-full"></div>
             </div>
-
-            {/* Explainer Box: Why 15/100? */}
-            <div className="mt-6 bg-white/[0.02] border border-white/5 rounded-2xl p-4.5 flex items-start gap-3 text-xs text-text-secondary">
-              <AlertTriangle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-1">
-                <span className="font-bold text-white">Why did my target address score 15/100?</span>
-                <p className="leading-normal text-[11px]">
-                  If an address is unregistered in the GoPlausible Bazaar index, has zero on-chain settlement record, or belongs to another network (like Ethereum/Etherscan), AgentGuard flags it as high risk to prevent wallet drainage.
-                </p>
-              </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              Registered in Bazaar + active settlements + claimed price <b>matches catalog schema</b>.
+            </p>
+            <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+              <span className="text-text-faint">ACTION:</span>
+              <span className="text-brand-emerald font-bold uppercase">PROCEED</span>
             </div>
           </div>
 
-          {/* Multi-Framework Drop-In Code Card */}
-          <div className="premium-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <div>
-                <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest font-display">AI Agent Drop-In</span>
-                <h3 className="text-xl font-black text-white font-display mt-1">Multi-Framework Integration</h3>
-                <p className="text-xs text-text-secondary mt-1">Select your agent framework to view and copy the 3-line security wrapper.</p>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Tab selectors */}
-                <div className="flex bg-bg-navy-dark border border-white/10 p-1 rounded-xl">
-                  {[
-                    { id: "ts", label: "TypeScript" },
-                    { id: "py", label: "Python (Native)" },
-                    { id: "langchain", label: "LangChain" },
-                    { id: "crewai", label: "CrewAI" }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setCodeTab(tab.id as any)}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                        codeTab === tab.id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Copy code button */}
-                <button
-                  onClick={() => {
-                    const snippets: Record<string, string> = {
-                      ts: `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// 🚀 All requests are verified by AgentGuard on-chain before payment!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();\nif (verdict.trust.recommendation === "proceed") {\n  console.log("Safe to pay merchant!");\n}`,
-                      py: `import requests\nfrom x402 import wrap_session\n\n# Wrap standard python session with AgentGuard firewall\nsession = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])\n\n# 🚀 Automated pre-payment trust audit on Algorand Testnet!\nresponse = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n    "merchantAddress": "api.algometrics.org",\n    "claimedPrice": {"amount": "10000", "asset": "USDC"}\n})\nverdict = response.json()\nif verdict["trust"]["recommendation"] == "proceed":\n    print("Safe to pay merchant! Releasing primary payment...")`,
-                      langchain: `from langchain.tools import tool\nimport requests\n\n@tool\ndef agentguard_pre_payment_check(merchant_url: str, amount_usdc: str) -> str:\n    """Audits a merchant endpoint on Algorand before releasing payment."""\n    res = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_url,\n        "claimedPrice": {"amount": amount_usdc, "asset": "USDC"}\n    })\n    verdict = res.json()\n    if verdict["trust"]["recommendation"] != "proceed":\n        raise Exception(f"Security Alert: High risk merchant blocked! ({verdict['trust']['reputationScore']}/100)")\n    return "VERIFIED SAFE: Proceed with purchase."`,
-                      crewai: `from crewai_tools import tool\nimport requests\n\n@tool("AgentGuard Security Gate")\ndef audit_merchant(merchant_address: str, price_base: str) -> str:\n    """Audits merchant trust and spend limits on Algorand before paying."""\n    r = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_address,\n        "claimedPrice": {"amount": price_base, "asset": "USDC"}\n    })\n    data = r.json()\n    return f"Verdict: {data['trust']['verdict'].upper()} (Score: {data['trust']['reputationScore']}/100)"`
-                    };
-                    copyToClipboard(snippets[codeTab], setCopiedCode);
-                  }}
-                  className="p-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-1.5 text-text-primary cursor-pointer shrink-0"
-                >
-                  {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedCode ? "Copied!" : "Copy Code"}
-                </button>
-              </div>
+          {/* 85 Tier */}
+          <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-white">Trusted Vendor</span>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-blue/15 text-brand-blue font-mono">85 / 100</span>
             </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-blue w-[85%] rounded-full"></div>
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              Registered in Bazaar with <b>proven settlement history</b> (90+ verified settles on Algorand).
+            </p>
+            <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+              <span className="text-text-faint">ACTION:</span>
+              <span className="text-brand-blue font-bold uppercase">PROCEED</span>
+            </div>
+          </div>
 
-            {/* Code block display */}
-            <div className="bg-[#050505] border border-white/10 rounded-2xl p-5 font-mono text-xs text-text-primary overflow-x-auto leading-relaxed">
-              {codeTab === "ts" && (
-                <pre className="text-brand-blue/90">
+          {/* 50 Tier */}
+          <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-white">Unverified New</span>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-amber/15 text-brand-amber font-mono">50 / 100</span>
+            </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-amber w-1/2 rounded-full"></div>
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              Registered public key in index, but has <b>0 historical transactions</b> (brand-new provider).
+            </p>
+            <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+              <span className="text-text-faint">ACTION:</span>
+              <span className="text-brand-amber font-bold uppercase">CAUTION</span>
+            </div>
+          </div>
+
+          {/* 15 Tier */}
+          <div className="premium-card p-5 rounded-2xl flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-white">High Risk / Scam</span>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded bg-brand-rose/15 text-brand-rose font-mono">15 / 100</span>
+            </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-rose w-[15%] rounded-full"></div>
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              <b>Unregistered target</b> or foreign-chain address with 0 record. Firewall blocks payment.
+            </p>
+            <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[9px] font-mono">
+              <span className="text-text-faint">ACTION:</span>
+              <span className="text-brand-rose font-bold uppercase">ABORT</span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Explainer Box: Why 15/100? */}
+        <div className="bg-bg-navy-dark border border-brand-amber/20 rounded-2xl p-6 mb-12 flex items-start gap-4">
+          <AlertTriangle className="w-5 h-5 text-brand-amber shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-1.5 text-xs">
+            <h4 className="text-sm font-bold text-white font-display">Why did my target address score 15/100?</h4>
+            <p className="text-text-secondary leading-relaxed">
+              AgentGuard implements a <b>Zero-Trust Security Model</b>. If an address is unregistered in the GoPlausible Bazaar index, has zero on-chain settlement history, or belongs to another network (such as Ethereum Tether <code>0xdac1...</code>), AgentGuard assigns a <b>15/100 HIGH RISK</b> rating and instructs your AI agent to <b>ABORT</b> to prevent irreversible wallet drainage.
+            </p>
+          </div>
+        </div>
+
+        {/* Multi-Framework Drop-In Code Section */}
+        <div id="sdk" className="premium-card rounded-2xl p-7 flex flex-col gap-6 scroll-mt-24">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest font-display">Developer Drop-In</span>
+              <h3 className="text-xl font-bold text-white font-display mt-0.5">Connect Your AI Agent in 2 Lines</h3>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex bg-bg-navy-dark border border-white/10 p-1 rounded-xl">
+                {[
+                  { id: "ts", label: "TypeScript" },
+                  { id: "py", label: "Python (Native)" },
+                  { id: "langchain", label: "LangChain" },
+                  { id: "crewai", label: "CrewAI" }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setCodeTab(tab.id as any)}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      codeTab === tab.id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  const snippets: Record<string, string> = {
+                    ts: `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";\nimport { ExactAvmScheme } from "@x402/avm/exact/client";\nimport { toClientAvmSigner } from "@x402/avm";\n\nconst signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);\nconst config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };\nconst auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);\n\n// All requests are verified by AgentGuard on-chain before payment!\nconst res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {\n  method: "POST",\n  body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })\n});\nconst verdict = await res.json();\nif (verdict.trust.recommendation === "proceed") {\n  console.log("Safe to pay merchant!");\n}`,
+                    py: `import requests\nfrom x402 import wrap_session\n\n# Wrap standard python session with AgentGuard firewall\nsession = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])\n\n# Automated pre-payment trust audit on Algorand Testnet!\nresponse = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n    "merchantAddress": "api.algometrics.org",\n    "claimedPrice": {"amount": "10000", "asset": "USDC"}\n})\nverdict = response.json()\nif verdict["trust"]["recommendation"] == "proceed":\n    print("Safe to pay merchant! Releasing primary payment...")`,
+                    langchain: `from langchain.tools import tool\nimport requests\n\n@tool\ndef agentguard_pre_payment_check(merchant_url: str, amount_usdc: str) -> str:\n    """Audits a merchant endpoint on Algorand before releasing payment."""\n    res = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_url,\n        "claimedPrice": {"amount": amount_usdc, "asset": "USDC"}\n    })\n    verdict = res.json()\n    if verdict["trust"]["recommendation"] != "proceed":\n        raise Exception(f"Security Alert: High risk merchant blocked! ({verdict['trust']['reputationScore']}/100)")\n    return "VERIFIED SAFE: Proceed with purchase."`,
+                    crewai: `from crewai_tools import tool\nimport requests\n\n@tool("AgentGuard Security Gate")\ndef audit_merchant(merchant_address: str, price_base: str) -> str:\n    """Audits merchant trust and spend limits on Algorand before paying."""\n    r = requests.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={\n        "merchantAddress": merchant_address,\n        "claimedPrice": {"amount": price_base, "asset": "USDC"}\n    })\n    data = r.json()\n    return f"Verdict: {data['trust']['verdict'].upper()} (Score: {data['trust']['reputationScore']}/100)"`
+                  };
+                  copyToClipboard(snippets[codeTab], setCopiedCode);
+                }}
+                className="p-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-1.5 text-text-primary cursor-pointer shrink-0"
+              >
+                {copiedCode ? <Check className="w-3.5 h-3.5 text-brand-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedCode ? "Copied!" : "Copy Code"}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-[#020202] border border-white/10 rounded-xl p-5 font-mono text-xs text-text-primary overflow-x-auto leading-relaxed">
+            {codeTab === "ts" && (
+              <pre className="text-brand-blue/90">
 {`import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { ExactAvmScheme } from "@x402/avm/exact/client";
 import { toClientAvmSigner } from "@x402/avm";
 
-// 1. Recover your agent's private key
 const signer = toClientAvmSigner(process.env.AGENT_SECRET_KEY);
 const config = { schemes: [{ network: "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", client: new ExactAvmScheme(signer) }] };
-
-// 2. Wrap native fetch with x402 pre-payment security gate
 const auditedFetch = wrapFetchWithPaymentFromConfig(fetch, config);
 
-// 🚀 Request is automatically audited on Algorand Testnet before funds release!
+// All requests are audited on-chain before funds move!
 const res = await auditedFetch("https://agentguard.bakshibhavi.workers.dev/api/check", {
   method: "POST",
   body: JSON.stringify({ merchantAddress: "api.algometrics.org", claimedPrice: { amount: "10000", asset: "USDC" } })
@@ -1275,18 +1193,18 @@ const verdict = await res.json();
 if (verdict.trust.recommendation === "proceed") {
   console.log("Safe to pay merchant!");
 }`}
-                </pre>
-              )}
+              </pre>
+            )}
 
-              {codeTab === "py" && (
-                <pre className="text-brand-emerald/90">
+            {codeTab === "py" && (
+              <pre className="text-brand-emerald/90">
 {`import requests
 from x402 import wrap_session
 
-# 1. Wrap standard python requests session with AgentGuard x402 firewall
+# Wrap standard python requests session with AgentGuard firewall
 session = wrap_session(private_key=os.environ["AGENT_PRIVATE_KEY"])
 
-# 🚀 Automated pre-payment trust audit settled on Algorand Testnet!
+# Automated pre-payment trust audit settled on Algorand Testnet!
 response = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", json={
     "merchantAddress": "api.algometrics.org",
     "claimedPrice": {"amount": "10000", "asset": "USDC"}
@@ -1295,11 +1213,11 @@ response = session.post("https://agentguard.bakshibhavi.workers.dev/api/check", 
 verdict = response.json()
 if verdict["trust"]["recommendation"] == "proceed":
     print("Safe to pay merchant! Releasing primary payment...")`}
-                </pre>
-              )}
+              </pre>
+            )}
 
-              {codeTab === "langchain" && (
-                <pre className="text-brand-violet/90">
+            {codeTab === "langchain" && (
+              <pre className="text-brand-violet/90">
 {`from langchain.tools import tool
 import requests
 
@@ -1314,11 +1232,11 @@ def agentguard_pre_payment_check(merchant_url: str, amount_usdc: str) -> str:
     if verdict["trust"]["recommendation"] != "proceed":
         raise Exception(f"Security Alert: High risk merchant blocked! ({verdict['trust']['reputationScore']}/100)")
     return "VERIFIED SAFE: Proceed with purchase."`}
-                </pre>
-              )}
+              </pre>
+            )}
 
-              {codeTab === "crewai" && (
-                <pre className="text-brand-amber/90">
+            {codeTab === "crewai" && (
+              <pre className="text-brand-amber/90">
 {`from crewai_tools import tool
 import requests
 
@@ -1331,38 +1249,37 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
     })
     data = r.json()
     return f"Verdict: {data['trust']['verdict'].upper()} (Score: {data['trust']['reputationScore']}/100)"`}
-                </pre>
-              )}
-            </div>
+              </pre>
+            )}
           </div>
-
         </div>
+
       </section>
 
-      {/* 5. Feature Highlights (Awwwards Grids with dynamic Mouse Spotlights) */}
-      <section id="features" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
-        
+      {/* 6. System Features Grid */}
+      <section id="features" className="reveal-section w-full max-w-7xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
         <div className="text-center mb-16">
           <span className="text-[10px] font-bold text-brand-magenta uppercase tracking-widest font-display">System Features</span>
-          <h2 className="text-4xl font-black text-white font-display mt-2">Why Digital Infrastructure?</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-white font-display mt-2">Why Digital Infrastructure?</h2>
           <p className="text-text-secondary text-sm mt-3 max-w-xl mx-auto">
             A reliable, pay-per-call trust and spend policy firewall built specifically for machine-to-machine transactions.
           </p>
         </div>
 
-        {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { title: "Policy Firewall", desc: "Enforces granular per-call and daily remaining limits before transactions submit to the blockchain.", icon: Sliders, color: "text-brand-violet", bg: "bg-brand-violet/10" },
             { title: "Atomic Settlement", desc: "Leverages Algorand's atomic groups to structure gasless USDC checks and trigger instant release.", icon: Layers, color: "text-brand-blue", bg: "bg-brand-blue/10" },
-            { title: "Registry Discovery", desc: "Queries the GoPlausible Bazaar registry on-chain to search and verify merchant history.", icon: ShieldCheck, color: "text-brand-emerald", bg: "bg-brand-emerald/10" }
+            { title: "Registry Discovery", desc: "Queries the GoPlausible Bazaar registry on-chain to search and verify merchant history.", icon: ShieldCheck, color: "text-brand-emerald", bg: "bg-brand-emerald/10" },
+            { title: "Zero Gas Delegation", desc: "Facilitators sponsor native ALGO network fees so agents only require USDC.", icon: Zap, color: "text-brand-cyan", bg: "bg-brand-cyan/10" },
+            { title: "Zero-Trust Architecture", desc: "Blocks unregistered foreign-chain addresses to prevent wallet drainage.", icon: Lock, color: "text-brand-rose", bg: "bg-brand-rose/10" },
+            { title: "Algorand Standard Asset", desc: "Native compliance with Algorand Standard Asset USDC (ASA ID 10458941).", icon: Globe, color: "text-brand-amber", bg: "bg-brand-amber/10" }
           ].map((item, idx) => {
             const Icon = item.icon;
             return (
               <div 
                 key={idx}
-                onMouseMove={handleMouseMove}
-                className="premium-card spotlight-card rounded-2xl p-7 flex flex-col gap-4 relative overflow-hidden"
+                className="premium-card rounded-2xl p-7 flex flex-col gap-4 relative overflow-hidden"
               >
                 <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center self-start shadow-md`}>
                   <Icon className={`w-5.5 h-5.5 ${item.color}`} />
@@ -1377,8 +1294,8 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
         </div>
       </section>
 
-      {/* 6. FAQ Section Accordion */}
-      <section id="faq" className="reveal-section w-full max-w-4xl mx-auto px-6 py-20 relative z-10 border-t border-white/5">
+      {/* 7. FAQ Section Accordion */}
+      <section id="faq" className="reveal-section w-full max-w-4xl mx-auto px-6 py-20 relative z-10 border-t border-white/5 scroll-mt-24">
         <div className="text-center mb-12">
           <span className="text-[10px] font-bold text-brand-violet uppercase tracking-widest font-display">Documentation</span>
           <h2 className="text-3xl font-black text-white font-display mt-2">Frequently Asked Questions</h2>
@@ -1392,7 +1309,7 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             >
               <button 
                 onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                className="w-full text-left p-6 flex justify-between items-center text-sm font-bold text-white font-display"
+                className="w-full text-left p-6 flex justify-between items-center text-sm font-bold text-white font-display cursor-pointer"
               >
                 <span>{faq.q}</span>
                 <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-300 ${activeFaq === idx ? 'rotate-180' : ''}`} />
@@ -1413,11 +1330,8 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
       {/* 8. Futuristic Footer */}
       <footer className="w-full max-w-7xl mx-auto px-6 py-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
         
-        {/* Footer logo & info */}
+        {/* Footer logo */}
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-violet to-brand-blue flex items-center justify-center">
-            <ShieldCheck className="w-3.5 h-3.5 text-white" />
-          </div>
           <span className="text-xs font-bold font-display text-white">AgentGuard Protocol</span>
         </div>
 
@@ -1431,7 +1345,7 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             href="https://github.com/bhavishyaone1/AgentGuard" 
             target="_blank" 
             rel="noreferrer"
-            className="hover:text-white transition-colors flex items-center gap-1"
+            className="hover:text-white transition-colors"
           >
             GitHub
           </a>
@@ -1440,7 +1354,7 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             href="https://agentguard.bakshibhavi.workers.dev/api/health" 
             target="_blank" 
             rel="noreferrer"
-            className="hover:text-brand-emerald transition-colors flex items-center gap-1"
+            className="hover:text-brand-emerald transition-colors"
           >
             API Status
           </a>
@@ -1449,7 +1363,7 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             href="https://bank.testnet.algorand.network/" 
             target="_blank" 
             rel="noreferrer"
-            className="hover:text-brand-blue transition-colors flex items-center gap-1"
+            className="hover:text-brand-blue transition-colors"
           >
             Algorand Faucet
           </a>
@@ -1458,7 +1372,7 @@ def audit_merchant(merchant_address: str, price_base: str) -> str:
             href="https://facilitator.goplausible.xyz" 
             target="_blank" 
             rel="noreferrer"
-            className="hover:text-brand-violet transition-colors flex items-center gap-1"
+            className="hover:text-brand-violet transition-colors"
           >
             GoPlausible Bazaar
           </a>
