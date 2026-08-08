@@ -53,7 +53,9 @@ export default function App() {
   const [claimedPriceAmt, setClaimedPriceAmt] = useState<string>("10000"); // 0.01 USDC
   const [maxPerCall, setMaxPerCall] = useState<string>("50000"); // 0.05 USDC
   const [maxDailyRemaining, setMaxDailyRemaining] = useState<string>("200000"); // 0.20 USDC
-  const serverUrl = "http://localhost:8787";
+  const serverUrl = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8787"
+    : "https://agentguard.bakshibhavi.workers.dev";
 
   // Log / Flow State
   const [logs, setLogs] = useState<Array<{ time: string; msg: string; type: "info" | "success" | "warn" | "error" | "tx" }>>([]);
