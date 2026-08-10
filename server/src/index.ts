@@ -167,12 +167,18 @@ app.post("/api/check", async (c) => {
         if (merchantsRes.ok) {
           const mList: any = await merchantsRes.json();
           if (mList.items && mList.items.length > 0) {
-            merchantData = mList.items.find((m: any) => 
+            const foundBasic = mList.items.find((m: any) => 
               m.id === merchantAddress || 
               m.addresses?.avm === merchantAddress || 
               (m.addresses && Object.values(m.addresses).some((a: any) => String(a).toLowerCase() === merchantAddress.toLowerCase()))
             );
-            if (merchantData) {
+            if (foundBasic && foundBasic.id) {
+              const mDetailRes = await fetch(`${facilitatorUrl}/discovery/merchants/${foundBasic.id}`);
+              if (mDetailRes.ok) {
+                merchantData = await mDetailRes.json();
+              } else {
+                merchantData = foundBasic;
+              }
               reasons.push("Input resolved to a registered Algorand merchant address");
             }
           }
@@ -184,14 +190,15 @@ app.post("/api/check", async (c) => {
 
     if (merchantData) {
       registered = true;
-      reasons.push(`Merchant found in facilitator discovery registry: "${merchantData.name || "Unnamed Merchant"}"`);
+      const merchantDisplayName = merchantData.name || merchantData.enrich?.site?.title || "Registered Merchant";
+      reasons.push(`Merchant found in facilitator discovery registry: "${merchantDisplayName}"`);
 
-      // Check settlement history
-      const totalVerifications = merchantData.totalVerifications || 0;
+      // Check settlement history (supports both verifyCount and settleCount)
+      const verifyCount = merchantData.verifyCount || merchantData.totalVerifications || 0;
       const settleCount = merchantData.settleCount || 0;
-      if (totalVerifications > 0 || settleCount > 0) {
+      if (verifyCount > 0 || settleCount > 0) {
         hasSettlementHistory = true;
-        reasons.push(`Active settlement history observed (${totalVerifications} verifications, ${settleCount} settles)`);
+        reasons.push(`Active settlement history observed (${verifyCount} verifications, ${settleCount} settles)`);
       } else {
         reasons.push("No historical settlement activity found for this merchant");
       }
@@ -201,7 +208,6 @@ app.post("/api/check", async (c) => {
       if (resourceData && resourceData.accepts) {
         acceptsList = resourceData.accepts;
       } else if (merchantData.resources && merchantData.resources.length > 0) {
-        // If we queried the merchant profile, it contains all its resources
         const matchingResource = merchantData.resources.find((r: any) => 
           r.resourceUrl?.toLowerCase().includes(merchantAddress.toLowerCase())
         ) || merchantData.resources[0];
@@ -211,14 +217,12 @@ app.post("/api/check", async (c) => {
       }
 
       if (claimedPrice && acceptsList.length > 0) {
-        // Look for matching asset price in accepts
+        // Look for matching asset price in accepts (supports both Testnet 10458941 & Mainnet 31566704 USDC)
         const match = acceptsList.find((acc: any) => {
-          // Check asset matching (could be asset ID like 10458941 or ticker symbol like USDC)
           const assetMatches = acc.asset === claimedPrice.asset || 
-                               (claimedPrice.asset === "USDC" && acc.asset === "10458941") || 
-                               (claimedPrice.asset === "ALGO" && acc.asset === "0"); // 0 for native ALGO or as specified
+                               (claimedPrice.asset === "USDC" && (acc.asset === "10458941" || acc.asset === "31566704")) || 
+                               (claimedPrice.asset === "ALGO" && (acc.asset === "0" || acc.asset === 0));
           
-          // Price checking - match amount
           const amountMatches = acc.amount === claimedPrice.amount || acc.maxAmountRequired === claimedPrice.amount;
           return assetMatches && amountMatches;
         });
