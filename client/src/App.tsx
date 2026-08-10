@@ -286,7 +286,8 @@ export default function App() {
             const txn = algosdk.decodeUnsignedTransaction(txnBytes);
             return txn.signTxn(account.sk);
           });
-          addLog("Transaction group signed.", "success");
+          addLog("Transaction group signed. Submitting to GoPlausible Facilitator...", "success");
+          addLog("Awaiting Algorand Testnet block confirmation (~3.3s)...", "info");
           return signed;
         }
       };
@@ -300,15 +301,20 @@ export default function App() {
         ],
       };
 
+      let attemptCount = 0;
       const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-        addLog(`POST ${serverUrl}/api/check (Initial unpaid call)`, "info");
+        attemptCount++;
+        if (attemptCount === 1) {
+          addLog(`POST ${serverUrl}/api/check (Requesting x402 challenge)`, "info");
+        } else {
+          addLog(`POST ${serverUrl}/api/check (Retrying with signed payment proof)`, "info");
+        }
         const res = await fetch(input, init);
         
         if (res.status === 402) {
-          addLog("Received HTTP 402 Payment Required", "warn");
-          addLog("Parsing PAYMENT-REQUIRED headers...", "info");
+          addLog("Received HTTP 402 Payment Required challenge", "warn");
+          addLog("Authorizing $0.01 USDC micro-settlement...", "info");
           setCurrentStep(3);
-          addLog("Submitting payment for settlement via GoPlausible testnet facilitator...", "info");
         }
         return res;
       };
